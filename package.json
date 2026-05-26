@@ -1,0 +1,16 @@
+{
+  "name": "chickadee-app-streaks",
+  "version": "1.0.0",
+  "description": "Streak tracking app for Chickadee Bandit households",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node -e \"const h=require('http'),fs=require('fs'),p=require('path');h.createServer((q,r)=>{const f=p.join('src',q.url==='/'?'index.html':q.url);try{r.end(fs.readFileSync(f))}catch{r.writeHead(404);r.end()}}).listen(3001,()=>console.log('Dev server: http://localhost:3001'))\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/run/streaks/" />
+  <title>Streaks</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--hub-font, system-ui, sans-serif);
+      font-size: var(--hub-font-size, 15px);
+      background: var(--hub-bg, #f9fafb);
+      color: var(--hub-text, #111827);
+      min-height: 100vh;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 0;
+      gap: 12px;
+    }
+    .app-header h1 { font-size: 1.25rem; font-weight: 700; }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 12px 20px 0;
+      border-bottom: 1px solid var(--hub-border, #e5e7eb);
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--hub-text-muted, #6b7280);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      font-family: inherit;
+      border-radius: var(--hub-radius, 6px) var(--hub-radius, 6px) 0 0;
+      transition: color .15s;
+    }
+    .tab-btn.active {
+      color: var(--hub-primary, #6366f1);
+      border-bottom-color: var(--hub-primary, #6366f1);
+      font-weight: 600;
+    }
+    .tab-btn:hover:not(.active) { color: var(--hub-text, #111827); }
+
+    .tab-panel { display: none; padding: 20px; }
+    .tab-panel.active { display: block; }
+
+    .section-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+
+    .streak-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .streak-card {
+      background: var(--hub-surface, #fff);
+      border: 1px solid var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 8px);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .streak-card.logged { border-color: #22c55e; }
+
+    .streak-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .streak-emoji { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+    .streak-info { flex: 1; min-width: 0; }
+    .streak-title { font-weight: 600; font-size: 1rem; word-break: break-word; }
+    .streak-owner { font-size: 0.8rem; color: var(--hub-text-muted, #6b7280); margin-top: 2px; }
+
+    .streak-counts {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .count-block { text-align: center; }
+    .count-val { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .count-label { font-size: 0.7rem; color: var(--hub-text-muted, #6b7280); text-transform: uppercase; letter-spacing: .04em; }
+    .count-fire { color: #f97316; }
+    .count-best { color: var(--hub-text-muted, #6b7280); }
+
+    .streak-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 99px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+    .badge-private  { color: #7c3aed; border-color: #ddd6fe; background: #f5f3ff; }
+    .badge-adults   { color: #b45309; border-color: #fde68a; background: #fffbeb; }
+    .badge-everyone { color: #047857; border-color: #a7f3d0; background: #ecfdf5; }
+    .badge-group    { color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; }
+
+    .streak-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    button { font-family: inherit; cursor: pointer; }
+
+    .btn {
+      padding: 7px 14px;
+      border-radius: var(--hub-radius, 6px);
+      border: 1px solid var(--hub-border, #e5e7eb);
+      background: var(--hub-surface, #fff);
+      color: var(--hub-text, #111827);
+      font-size: 0.85rem;
+      transition: background .15s;
+    }
+    .btn:hover:not(:disabled) { background: var(--hub-bg, #f9fafb); }
+    .btn:disabled { opacity: .5; cursor: default; }
+
+    .btn-primary {
+      background: var(--hub-primary, #6366f1);
+      color: var(--hub-primary-fg, #fff);
+      border-color: transparent;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--hub-primary-hover, #4f46e5); }
+
+    .btn-log {
+      flex: 1;
+      font-weight: 600;
+      background: var(--hub-primary, #6366f1);
+      color: var(--hub-primary-fg, #fff);
+      border-color: transparent;
+    }
+    .btn-log:hover:not(:disabled) { background: var(--hub-primary-hover, #4f46e5); }
+    .btn-log.done {
+      background: #dcfce7;
+      color: #15803d;
+      border-color: #86efac;
+    }
+    .btn-log.done:hover:not(:disabled) { background: #bbf7d0; }
+
+    .btn-icon {
+      padding: 6px 10px;
+      font-size: 1rem;
+      border-radius: var(--hub-radius, 6px);
+      border: 1px solid var(--hub-border, #e5e7eb);
+      background: var(--hub-surface, #fff);
+    }
+    .btn-danger { color: #dc2626; border-color: #fecaca; }
+    .btn-danger:hover:not(:disabled) { background: #fef2f2; }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--hub-text-muted, #6b7280);
+    }
+    .empty-state p { margin-top: 8px; font-size: 0.9rem; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal {
+      background: var(--hub-surface, #fff);
+      border-radius: var(--hub-radius, 8px);
+      padding: 24px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+    .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+    .modal-body { display: flex; flex-direction: column; gap: 14px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 0.85rem; font-weight: 500; }
+    input[type="text"], select, textarea {
+      padding: 8px 10px;
+      border: 1px solid var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 6px);
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: var(--hub-bg, #f9fafb);
+      color: var(--hub-text, #111827);
+    }
+    input[type="text"]:focus, select:focus { outline: 2px solid var(--hub-primary, #6366f1); outline-offset: 1px; }
+
+    .emoji-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .emoji-opt {
+      font-size: 1.5rem;
+      width: 44px; height: 44px;
+      border-radius: 8px;
+      border: 2px solid var(--hub-border, #e5e7eb);
+      background: var(--hub-bg, #f9fafb);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .12s;
+    }
+    .emoji-opt.selected { border-color: var(--hub-primary, #6366f1); background: var(--hub-surface, #fff); }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .toggle-label { font-size: 0.9rem; }
+    .toggle-desc { font-size: 0.78rem; color: var(--hub-text-muted, #6b7280); margin-top: 2px; }
+    .toggle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      width: 40px; height: 22px;
+      border-radius: 99px;
+      background: var(--hub-border, #e5e7eb);
+      transition: background .15s;
+      cursor: pointer;
+      position: relative;
+    }
+    .toggle input:checked + .toggle-track { background: var(--hub-primary, #6366f1); }
+    .toggle-track::after {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform .15s;
+    }
+    .toggle input:checked + .toggle-track::after { transform: translateX(18px); }
+
+    .status { text-align: center; padding: 8px; color: var(--hub-text-muted, #6b7280); font-size: 0.85rem; }
+
+    /* Streak detail / log history */
+    .log-history { margin-top: 8px; }
+    .log-history h3 { font-size: 0.85rem; font-weight: 600; color: var(--hub-text-muted, #6b7280); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+    .log-list { display: flex; flex-direction: column; gap: 4px; }
+    .log-item { font-size: 0.85rem; color: var(--hub-text-muted, #6b7280); padding: 4px 0; border-bottom: 1px solid var(--hub-border, #e5e7eb); }
+    .log-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+<div class="app-header">
+  <h1>🔥 Streaks</h1>
+  <span id="status-msg" class="status" style="flex:1"></span>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('mine')">Mine</button>
+  <button class="tab-btn" onclick="switchTab('family')">Family</button>
+</div>
+
+<div id="tab-mine" class="tab-panel active">
+  <div class="section-actions">
+    <button class="btn btn-primary" onclick="openCreateModal()">+ New Streak</button>
+  </div>
+  <div id="mine-grid" class="streak-grid"></div>
+  <div id="mine-empty" class="empty-state" style="display:none">
+    <div style="font-size:2.5rem">🔥</div>
+    <p>No streaks yet. Create one to get started!</p>
+  </div>
+</div>
+
+<div id="tab-family" class="tab-panel">
+  <div id="family-grid" class="streak-grid"></div>
+  <div id="family-empty" class="empty-state" style="display:none">
+    <div style="font-size:2.5rem">👨‍👩‍👧</div>
+    <p>No shared or group streaks yet.</p>
+  </div>
+</div>
+
+<script type="module">
+import { computeStreaks, todayDate, milestoneReached } from "./logic.js";
+import { esc, isAdult, hubConfirm, memberColor, initial } from "/hub-sdk.js";
+
+const CONTEXT     = window.__CONTEXT_URL     ?? "";
+const DB          = window.__DB_URL          ?? "";
+const EVENTS_URL  = window.__EVENTS_URL      ?? "/api/events";
+const APP_ID      = window.__APP_ID          ?? "streaks";
+const ME          = window.__CURRENT_MEMBER  ?? null;
+
+let members = [];
+let allStreaks = [];   // raw rows from DB
+let logMap   = {};     // streakId -> [YYYY-MM-DD, ...]
+let modalEl  = null;
+let selectedEmoji = "🔥";
+
+// ── DB helper ───────────────────────────────────────────────────────────────
+
+async function db(sql, params = []) {
+  if (!DB) return { rows: [] };
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, params }),
+  });
+  return res.json();
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+
+(async () => {
+  await loadMembers();
+  await Promise.all([loadStreaks(), loadLogs()]);
+  render();
+})();
+
+async function loadMembers() {
+  if (!CONTEXT) {
+    members = [
+      { id: "demo-1", name: "Alex", role: "adult" },
+      { id: "demo-2", name: "Sam",  role: "adult" },
+      { id: "demo-3", name: "Mia",  role: "child" },
+    ];
+    return;
+  }
+  try {
+    const res = await fetch(`${CONTEXT}?keys=family.members`);
+    members = ((await res.json())["family.members"]) ?? [];
+  } catch { members = []; }
+}
+
+async function loadStreaks() {
+  if (!DB) {
+    allStreaks = demoStreaks();
+    return;
+  }
+  const r = await db(`SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM streaks WHERE archived_at IS NULL ORDER BY created_at ASC`);
+  allStreaks = r.rows ?? [];
+}
+
+async function loadLogs() {
+  if (!DB) {
+    logMap = demoLogs();
+    return;
+  }
+  // Load all logs for the last 400 days (enough for best streak calculation)
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 400);
+  const since = cutoff.toISOString().slice(0, 10);
+  const r = await db(
+    `SELECT streak_id, logged_date FROM streak_logs WHERE logged_date >= ? ORDER BY logged_date ASC`,
+    [since]
+  );
+  logMap = {};
+  for (const row of (r.rows ?? [])) {
+    if (!logMap[row.streak_id]) logMap[row.streak_id] = [];
+    logMap[row.streak_id].push(row.logged_date);
+  }
+}
+
+// ── Visibility filter ────────────────────────────────────────────────────────
+
+function canSee(streak) {
+  // Owner always sees their own streaks
+  if (streak.owner_id === ME?.id) return true;
+  // Group streaks follow visibility too
+  const vis = streak.visibility;
+  if (vis === "private") return false;
+  if (vis === "adults") return isAdult(ME, members);
+  return true; // 'everyone'
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+
+function render() {
+  const visibleStreaks = allStreaks.filter(canSee);
+  const mine   = visibleStreaks.filter(s => s.owner_id === ME?.id || (!ME && true));
+  const family = visibleStreaks.filter(s => s.is_group || s.owner_id !== ME?.id);
+
+  renderGrid("mine-grid",   "mine-empty",   mine,   true);
+  renderGrid("family-grid", "family-empty", family, false);
+}
+
+function renderGrid(gridId, emptyId, streaks, isMine) {
+  const grid  = document.getElementById(gridId);
+  const empty = document.getElementById(emptyId);
+  if (!streaks.length) {
+    grid.innerHTML = "";
+    empty.style.display = "";
+    return;
+  }
+  empty.style.display = "none";
+  grid.innerHTML = streaks.map(s => streakCard(s, isMine)).join("");
+}
+
+function streakCard(s, showManage) {
+  const logs    = logMap[s.id] ?? [];
+  const { current, best, loggedToday: done } = computeStreaks(logs);
+  const canLog  = s.is_group || s.owner_id === ME?.id;
+  const isOwner = s.owner_id === ME?.id;
+
+  const owner = members.find(m => m.id === s.owner_id);
+  const ownerName = owner ? esc(owner.name) : "";
+
+  const visLabel = s.visibility === "private"
+    ? `<span class="badge badge-private">🔒 Private</span>`
+    : s.visibility === "adults"
+      ? `<span class="badge badge-adults">👤 Adults</span>`
+      : `<span class="badge badge-everyone">🌍 Everyone</span>`;
+
+  const groupBadge = s.is_group
+    ? `<span class="badge badge-group">👥 Group</span>`
+    : "";
+
+  return `
+    <div class="streak-card${done ? " logged" : ""}" id="card-${esc(s.id)}">
+      <div class="streak-top">
+        <div class="streak-emoji">${esc(s.emoji)}</div>
+        <div class="streak-info">
+          <div class="streak-title">${esc(s.title)}</div>
+          ${!showManage && ownerName ? `<div class="streak-owner">${ownerName}</div>` : ""}
+        </div>
+      </div>
+      <div class="streak-counts">
+        <div class="count-block">
+          <div class="count-val count-fire">${current}</div>
+          <div class="count-label">🔥 Current</div>
+        </div>
+        <div class="count-block">
+          <div class="count-val count-best">${best}</div>
+          <div class="count-label">⭐ Best</div>
+        </div>
+      </div>
+      <div class="streak-badges">
+        ${showManage ? visLabel : ""}
+        ${groupBadge}
+      </div>
+      <div class="streak-actions">
+        ${canLog ? `
+          <button class="btn btn-log${done ? " done" : ""}"
+                  onclick="window.toggleLog('${esc(s.id)}', ${done})"
+                  ${done ? "" : ""}>
+            ${done ? "✓ Logged today" : "Log today"}
+          </button>
+        ` : ""}
+        ${showManage && isOwner ? `
+          <button class="btn btn-icon" title="Edit" onclick="window.openEditModal('${esc(s.id)}')">✏️</button>
+          <button class="btn btn-icon btn-danger" title="Archive" onclick="window.archiveStreak('${esc(s.id)}')">🗑</button>
+        ` : ""}
+      </div>
+    </div>
+  `;
+}
+
+// ── Log / Unlog ──────────────────────────────────────────────────────────────
+
+window.toggleLog = async function(streakId, alreadyDone) {
+  if (!ME) { setStatus("Sign in to log streaks."); return; }
+  const today = todayDate();
+
+  if (alreadyDone) {
+    if (!await hubConfirm({ message: "Undo today's log?", confirmLabel: "Undo", destructive: true })) return;
+    await db(
+      `DELETE FROM streak_logs WHERE streak_id = ? AND logged_date = ? AND logged_by = ?`,
+      [streakId, today, ME.id]
+    );
+    if (logMap[streakId]) {
+      logMap[streakId] = logMap[streakId].filter(d => d !== today);
+    }
+  } else {
+    const id = crypto.randomUUID();
+    try {
+      await db(
+        `INSERT INTO streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, ?, ?)`,
+        [id, streakId, ME.id, today, new Date().toISOString()]
+      );
+      if (!logMap[streakId]) logMap[streakId] = [];
+      logMap[streakId].push(today);
+
+      // Check for milestone
+      const { current } = computeStreaks(logMap[streakId]);
+      if (milestoneReached(current)) {
+        const streak = allStreaks.find(s => s.id === streakId);
+        await publishMilestone(streak, current);
+      }
+    } catch (e) {
+      setStatus("Already logged today.");
+      return;
+    }
+  }
+  render();
+};
+
+async function publishMilestone(streak, days) {
+  if (!streak) return;
+  await fetch(EVENTS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      source_app_id: APP_ID,
+      type: "streak.milestone",
+      subject_id: ME?.id,
+      payload: { streak_id: streak.id, title: streak.title, emoji: streak.emoji, days },
+    }),
+  }).catch(() => {});
+}
+
+// ── Create / Edit Modal ──────────────────────────────────────────────────────
+
+const EMOJI_OPTS = ["🔥","💪","🏃","📚","🥗","💧","🧘","🎯","🎸","✍️","🛌","🚴","🌱","🧹","💊"];
+
+window.openCreateModal = function() {
+  selectedEmoji = "🔥";
+  openModal(streakFormHtml(null));
+};
+
+window.openEditModal = function(streakId) {
+  const s = allStreaks.find(x => x.id === streakId);
+  if (!s) return;
+  selectedEmoji = s.emoji;
+  openModal(streakFormHtml(s));
+};
+
+function streakFormHtml(existing) {
+  const isEdit = !!existing;
+  const emojiButtons = EMOJI_OPTS.map(e =>
+    `<button type="button" class="emoji-opt${e === selectedEmoji ? " selected" : ""}" onclick="window.selectEmoji('${e}')">${e}</button>`
+  ).join("");
+
+  return `
+    <h2>${isEdit ? "Edit Streak" : "New Streak"}</h2>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="f-title">Name</label>
+        <input type="text" id="f-title" placeholder="e.g. Morning run" maxlength="60" value="${isEdit ? esc(existing.title) : ""}" />
+      </div>
+      <div class="form-group">
+        <label>Emoji</label>
+        <div class="emoji-row" id="emoji-row">${emojiButtons}</div>
+      </div>
+      <div class="form-group">
+        <label for="f-vis">Visibility</label>
+        <select id="f-vis">
+          <option value="private"  ${!isEdit || existing.visibility==="private"  ? "selected" : ""}>🔒 Private — only me</option>
+          <option value="adults"   ${isEdit && existing.visibility==="adults"    ? "selected" : ""}>👤 Adults only</option>
+          <option value="everyone" ${isEdit && existing.visibility==="everyone"  ? "selected" : ""}>🌍 Everyone</option>
+        </select>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Group streak</div>
+          <div class="toggle-desc">Anyone who can see this streak can also log it</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="f-group" ${isEdit && existing.is_group ? "checked" : ""} />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="window.saveStreak('${isEdit ? esc(existing.id) : ""}')">
+        ${isEdit ? "Save" : "Create"}
+      </button>
+    </div>
+  `;
+}
+
+window.selectEmoji = function(emoji) {
+  selectedEmoji = emoji;
+  document.querySelectorAll(".emoji-opt").forEach(btn => {
+    btn.classList.toggle("selected", btn.textContent === emoji);
+  });
+};
+
+window.saveStreak = async function(existingId) {
+  const title = document.getElementById("f-title").value.trim();
+  if (!title) { document.getElementById("f-title").focus(); return; }
+  const visibility = document.getElementById("f-vis").value;
+  const isGroup    = document.getElementById("f-group").checked ? 1 : 0;
+  const emoji      = selectedEmoji;
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+
+  try {
+    if (existingId) {
+      await db(
+        `UPDATE streaks SET title=?, emoji=?, visibility=?, is_group=? WHERE id=?`,
+        [title, emoji, visibility, isGroup, existingId]
+      );
+      const s = allStreaks.find(x => x.id === existingId);
+      if (s) Object.assign(s, { title, emoji, visibility, is_group: isGroup });
+    } else {
+      if (!ME) { setStatus("Sign in to create streaks."); return; }
+      const id = crypto.randomUUID();
+      const now = new Date().toISOString();
+      await db(
+        `INSERT INTO streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, ME.id, title, emoji, visibility, isGroup, now]
+      );
+      allStreaks.push({ id, owner_id: ME.id, title, emoji, visibility, is_group: isGroup, created_at: now, archived_at: null });
+    }
+    closeModal();
+    render();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Create"; }
+    throw e;
+  }
+};
+
+// ── Archive ──────────────────────────────────────────────────────────────────
+
+window.archiveStreak = async function(streakId) {
+  const s = allStreaks.find(x => x.id === streakId);
+  if (!s) return;
+  if (!await hubConfirm({
+    message: `Archive "${s.title}"?`,
+    description: "It will no longer appear in your list. Your log history is preserved.",
+    confirmLabel: "Archive",
+    destructive: true,
+  })) return;
+
+  await db(`UPDATE streaks SET archived_at=? WHERE id=?`, [new Date().toISOString(), streakId]);
+  allStreaks = allStreaks.filter(x => x.id !== streakId);
+  render();
+};
+
+// ── Modal helpers ─────────────────────────────────────────────────────────────
+
+function openModal(html) {
+  closeModal();
+  modalEl = document.createElement("div");
+  modalEl.className = "modal-backdrop";
+  modalEl.innerHTML = `<div class="modal">${html}</div>`;
+  modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
+  document.body.appendChild(modalEl);
+}
+window.closeModal = function() { modalEl?.remove(); modalEl = null; };
+
+function setStatus(msg) {
+  const el = document.getElementById("status-msg");
+  if (!el) return;
+  el.textContent = msg;
+  setTimeout(() => { el.textContent = ""; }, 3000);
+}
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+
+window.switchTab = function(name) {
+  document.querySelectorAll(".tab-btn").forEach((btn, i) => {
+    btn.classList.toggle("active", btn.getAttribute("onclick").includes(`'${name}'`));
+  });
+  document.getElementById("tab-mine").classList.toggle("active", name === "mine");
+  document.getElementById("tab-family").classList.toggle("active", name === "family");
+};
+
+// ── Demo data ─────────────────────────────────────────────────────────────────
+
+function demoStreaks() {
+  return [
+    { id: "d1", owner_id: "demo-1", title: "Morning run",     emoji: "🏃", visibility: "everyone", is_group: 0, created_at: "2025-01-01", archived_at: null },
+    { id: "d2", owner_id: "demo-1", title: "Read 20 min",     emoji: "📚", visibility: "private",  is_group: 0, created_at: "2025-01-01", archived_at: null },
+    { id: "d3", owner_id: "demo-2", title: "Drink 8 glasses", emoji: "💧", visibility: "everyone", is_group: 0, created_at: "2025-01-01", archived_at: null },
+    { id: "d4", owner_id: "demo-1", title: "Family walk",     emoji: "🌳", visibility: "everyone", is_group: 1, created_at: "2025-01-01", archived_at: null },
+  ];
+}
+
+function demoLogs() {
+  const today = todayDate();
+  const offset = n => {
+    const d = new Date(today + "T00:00:00");
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  return {
+    d1: [offset(-6), offset(-5), offset(-4), offset(-3), offset(-2), offset(-1), today],
+    d2: [offset(-14), offset(-13), offset(-12), offset(-3), offset(-2), offset(-1)],
+    d3: [offset(-2), offset(-1)],
+    d4: [offset(-1), today],
+  };
+}
+</script>
+</body>
+</html>
