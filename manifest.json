@@ -15,6 +15,9 @@
     "default_audience": "everyone",
     "requires_approval": false
   },
+  "nav": {
+    "label": "Streaks"
+  },
   "storage": "db",
   "exports": ["member-streaks"],
   "publishes": ["streak.milestone"],
