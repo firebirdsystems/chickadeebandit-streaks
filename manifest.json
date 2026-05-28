@@ -5,7 +5,7 @@
   "description": "Track personal and family habits with streak counters. Create private or shared streaks, set up group challenges anyone can check off, and celebrate milestones together.",
   "entrypoint": "index.html",
   "runtime": "static",
-  "category": "productivity",
+  "category": "family",
   "tags": ["habits", "wellness", "fitness", "goals", "streaks"],
   "data_access": {
     "reads": ["family.members"],
