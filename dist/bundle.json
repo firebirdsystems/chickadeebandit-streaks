@@ -24,6 +24,9 @@
       "default_audience": "everyone",
       "requires_approval": false
     },
+    "nav": {
+      "label": "Streaks"
+    },
     "storage": "db",
     "exports": [
       "member-streaks"
@@ -44,6 +47,10 @@
     {
       "version": 1,
       "sql": "CREATE TABLE IF NOT EXISTS streaks (\n  household_id UUID    NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,\n  id           TEXT    NOT NULL,\n  owner_id     TEXT    NOT NULL,\n  title        TEXT    NOT NULL,\n  emoji        TEXT    NOT NULL DEFAULT '🔥',\n  -- 'private' = only owner sees it\n  -- 'adults'  = owner + all adults\n  -- 'everyone' = whole household\n  visibility   TEXT    NOT NULL DEFAULT 'private',\n  is_group     INTEGER NOT NULL DEFAULT 0,   -- 1 = any visible member can log\n  created_at   TEXT    NOT NULL,\n  archived_at  TEXT,\n  PRIMARY KEY (household_id, id)\n);\n\nCREATE TABLE IF NOT EXISTS streak_logs (\n  household_id UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,\n  id           TEXT NOT NULL,\n  streak_id    TEXT NOT NULL,\n  logged_by    TEXT NOT NULL,   -- member_id who checked it off\n  logged_date  TEXT NOT NULL,   -- YYYY-MM-DD local date\n  created_at   TEXT NOT NULL,\n  PRIMARY KEY (household_id, id)\n);\n\n-- Prevent duplicate logs for the same streak on the same day\nCREATE UNIQUE INDEX IF NOT EXISTS streak_logs_unique_day\n  ON streak_logs (household_id, streak_id, logged_date);"
+    },
+    {
+      "version": 2,
+      "sql": "-- Enforce streak visibility controls at the DB layer so children cannot see\n-- 'adults' or 'private' streaks by crafting direct SQL queries.\n--\n-- Children see: their own streaks (any visibility) OR streaks marked 'everyone'.\n-- Adults see: all streaks (unrestricted).\n-- streak_logs: children see only their own log entries.\n\nDROP POLICY IF EXISTS member_access ON streaks;\nCREATE POLICY member_access ON streaks\n  AS RESTRICTIVE FOR ALL TO hub_app_executor\n  USING (\n    current_setting('app.member_id', true) = ''\n    OR current_setting('app.member_role', true) != 'child'\n    OR owner_id = current_setting('app.member_id', true)\n    OR visibility = 'everyone'\n  );\n\nDROP POLICY IF EXISTS member_access ON streak_logs;\nCREATE POLICY member_access ON streak_logs\n  AS RESTRICTIVE FOR ALL TO hub_app_executor\n  USING (\n    current_setting('app.member_id', true) = ''\n    OR current_setting('app.member_role', true) != 'child'\n    OR logged_by = current_setting('app.member_id', true)\n  );"
     }
   ],
   "files": {
