@@ -356,7 +356,7 @@ async function loadStreaks() {
     allStreaks = demoStreaks();
     return;
   }
-  const r = await db(`SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM streaks WHERE archived_at IS NULL ORDER BY created_at ASC`);
+  const r = await db(`SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM streaks WHERE archived_at IS NULL AND ( owner_id = current_setting('app.member_id', true) OR visibility = 'everyone' OR (visibility = 'adults' AND current_setting('app.member_role', true) != 'child') OR current_setting('app.member_id', true) = '' ) ORDER BY created_at ASC`);
   allStreaks = r.rows ?? [];
 }
 
