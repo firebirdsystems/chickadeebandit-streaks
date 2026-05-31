@@ -23,5 +23,10 @@
   "publishes": ["streak.milestone"],
   "widget": { "label": "Streaks", "size": "small" },
   "resource_limits": { "max_db_bytes": 52428800 },
-  "icon": "🔥"
+  "icon": "🔥",
+  "ai_access": {
+    "allowed": true,
+    "mode": "read",
+    "db_exports": ["active_streaks", "todays_completions"]
+  }
 }
