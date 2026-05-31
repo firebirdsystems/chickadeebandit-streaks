@@ -28,6 +28,7 @@
     "allowed": true,
     "mode": "read_write",
     "db_exports": ["active_streaks", "todays_completions"],
-    "db_inserts": ["log_streak"]
+    "db_inserts": ["log_streak"],
+    "db_deletes": ["unlog_streak"]
   }
 }
