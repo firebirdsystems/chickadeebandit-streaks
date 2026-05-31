@@ -26,7 +26,8 @@
   "icon": "🔥",
   "ai_access": {
     "allowed": true,
-    "mode": "read",
-    "db_exports": ["active_streaks", "todays_completions"]
+    "mode": "read_write",
+    "db_exports": ["active_streaks", "todays_completions"],
+    "db_inserts": ["log_streak"]
   }
 }
