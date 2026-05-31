@@ -108,6 +108,37 @@ if (manifest.ai_access) {
           expect(() => JSON.parse(readFileSync(path, "utf-8")), `src/schemas/${name}.json must be valid JSON`).not.toThrow();
         }
       });
+
+      it("each schema declares type:array with an items definition", () => {
+        for (const name of ai.db_inserts) {
+          const path = join(__dirname, `../src/schemas/${name}.json`);
+          if (!existsSync(path)) continue;
+          let schema;
+          try { schema = JSON.parse(readFileSync(path, "utf-8")); } catch { continue; }
+          expect(schema.type, `src/schemas/${name}.json must declare "type": "array"`).toBe("array");
+          expect(
+            Array.isArray(schema.items) || (typeof schema.items === "object" && schema.items !== null),
+            `src/schemas/${name}.json must declare "items" to validate params`
+          ).toBe(true);
+        }
+      });
+
+      it("schema maxItems matches the number of $N placeholders in the SQL", () => {
+        for (const name of ai.db_inserts) {
+          const sqlPath    = join(__dirname, `../src/inserts/${name}.sql`);
+          const schemaPath = join(__dirname, `../src/schemas/${name}.json`);
+          if (!existsSync(sqlPath) || !existsSync(schemaPath)) continue;
+          const sql = readFileSync(sqlPath, "utf-8");
+          let schema;
+          try { schema = JSON.parse(readFileSync(schemaPath, "utf-8")); } catch { continue; }
+          const paramNums = [...sql.matchAll(/\$(\d+)/g)].map(m => parseInt(m[1], 10));
+          const maxParam  = paramNums.length > 0 ? Math.max(...paramNums) : 0;
+          expect(
+            schema.maxItems,
+            `src/schemas/${name}.json maxItems (${schema.maxItems}) must equal SQL $N count (${maxParam})`
+          ).toBe(maxParam);
+        }
+      });
     });
   }
 }
