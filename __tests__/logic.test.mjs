@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   todayDate,
   yesterdayDate,
+  lastNDays,
   computeStreaks,
   loggedToday,
   milestoneReached,
@@ -17,6 +18,39 @@ function dateOffset(n) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+describe("lastNDays", () => {
+  it("returns 7 entries by default", () => {
+    expect(lastNDays()).toHaveLength(7);
+  });
+
+  it("returns N entries when N is specified", () => {
+    expect(lastNDays(3)).toHaveLength(3);
+  });
+
+  it("last entry is today", () => {
+    const days = lastNDays();
+    expect(days[days.length - 1]).toBe(todayDate());
+  });
+
+  it("first entry is 6 days ago", () => {
+    const days = lastNDays();
+    expect(days[0]).toBe(dateOffset(-6));
+  });
+
+  it("entries are in ascending order", () => {
+    const days = lastNDays(7);
+    for (let i = 1; i < days.length; i++) {
+      expect(days[i] > days[i - 1]).toBe(true);
+    }
+  });
+
+  it("all entries match YYYY-MM-DD format", () => {
+    for (const d of lastNDays(7)) {
+      expect(d).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+});
 
 describe("todayDate / yesterdayDate", () => {
   it("todayDate matches new Date() local date", () => {

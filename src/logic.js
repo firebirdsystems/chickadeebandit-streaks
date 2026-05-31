@@ -10,6 +10,23 @@ export function todayDate() {
 }
 
 /**
+ * Returns the last N days (including today) as YYYY-MM-DD strings,
+ * oldest first. Defaults to 7.
+ */
+export function lastNDays(n = 7) {
+  const days = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    days.push(`${y}-${m}-${day}`);
+  }
+  return days;
+}
+
+/**
  * Returns yesterday's date as YYYY-MM-DD in local time.
  */
 export function yesterdayDate() {

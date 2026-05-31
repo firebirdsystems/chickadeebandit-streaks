@@ -168,6 +168,54 @@
     .btn-danger { color: #dc2626; border-color: #fecaca; }
     .btn-danger:hover:not(:disabled) { background: #fef2f2; }
 
+    .week-row {
+      display: flex;
+      gap: 4px;
+      justify-content: space-between;
+    }
+    .day-pip {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      padding: 4px 2px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .day-pip:hover { background: var(--hub-bg, #f9fafb); }
+    .day-pip .pip-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--hub-text-muted, #6b7280);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      line-height: 1;
+    }
+    .day-pip .pip-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--hub-border, #e5e7eb);
+      background: var(--hub-surface, #fff);
+      transition: all .12s;
+    }
+    .day-pip.is-today .pip-label { color: var(--hub-primary, #6366f1); }
+    .day-pip.is-today .pip-dot   { border-color: var(--hub-primary, #6366f1); }
+    .day-pip.is-logged .pip-dot  {
+      background: var(--hub-primary, #6366f1);
+      border-color: var(--hub-primary, #6366f1);
+    }
+    .streak-card.logged .day-pip.is-logged .pip-dot {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+    .streak-card.logged .day-pip.is-today .pip-label { color: #15803d; }
+    .streak-card.logged .day-pip.is-today .pip-dot   { border-color: #22c55e; }
+
     .empty-state {
       text-align: center;
       padding: 48px 20px;
@@ -301,7 +349,7 @@
 </div>
 
 <script type="module">
-import { computeStreaks, todayDate, milestoneReached } from "./logic.js";
+import { computeStreaks, todayDate, lastNDays, milestoneReached } from "./logic.js";
 import { esc, isAdult, hubConfirm, memberColor, initial } from "/hub-sdk.js";
 
 const CONTEXT     = window.__CONTEXT_URL     ?? "";
@@ -415,11 +463,15 @@ function renderGrid(gridId, emptyId, streaks, isMine) {
   grid.innerHTML = streaks.map(s => streakCard(s, isMine)).join("");
 }
 
+const DAY_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
 function streakCard(s, showManage) {
   const logs    = logMap[s.id] ?? [];
+  const logSet  = new Set(logs);
   const { current, best, loggedToday: done } = computeStreaks(logs);
   const canLog  = s.is_group || s.owner_id === ME?.id;
   const isOwner = s.owner_id === ME?.id;
+  const today   = todayDate();
 
   const owner = members.find(m => m.id === s.owner_id);
   const ownerName = owner ? esc(owner.name) : "";
@@ -433,6 +485,21 @@ function streakCard(s, showManage) {
   const groupBadge = s.is_group
     ? `<span class="badge badge-group">👥 Group</span>`
     : "";
+
+  const weekRow = canLog ? `
+    <div class="week-row">
+      ${lastNDays(7).map(date => {
+        const isLogged = logSet.has(date);
+        const isToday  = date === today;
+        const letter   = DAY_LETTERS[new Date(date + "T12:00:00").getDay()].slice(0, 1);
+        return `<button class="day-pip${isLogged ? " is-logged" : ""}${isToday ? " is-today" : ""}"
+                  onclick="window.toggleLog('${esc(s.id)}', ${isLogged}, '${date}')"
+                  title="${date}${isToday ? " (today)" : ""}">
+          <span class="pip-label">${letter}</span>
+          <span class="pip-dot"></span>
+        </button>`;
+      }).join("")}
+    </div>` : "";
 
   return `
     <div class="streak-card${done ? " logged" : ""}" id="card-${esc(s.id)}">
@@ -457,56 +524,54 @@ function streakCard(s, showManage) {
         ${showManage ? visLabel : ""}
         ${groupBadge}
       </div>
-      <div class="streak-actions">
-        ${canLog ? `
-          <button class="btn btn-log${done ? " done" : ""}"
-                  onclick="window.toggleLog('${esc(s.id)}', ${done})"
-                  ${done ? "" : ""}>
-            ${done ? "✓ Logged today" : "Log today"}
-          </button>
-        ` : ""}
-        ${showManage && isOwner ? `
+      ${weekRow}
+      ${showManage && isOwner ? `
+        <div class="streak-actions">
           <button class="btn btn-icon" title="Edit" onclick="window.openEditModal('${esc(s.id)}')">✏️</button>
           <button class="btn btn-icon btn-danger" title="Archive" onclick="window.archiveStreak('${esc(s.id)}')">🗑</button>
-        ` : ""}
-      </div>
+        </div>` : ""}
     </div>
   `;
 }
 
 // ── Log / Unlog ──────────────────────────────────────────────────────────────
 
-window.toggleLog = async function(streakId, alreadyDone) {
+window.toggleLog = async function(streakId, alreadyDone, date = null) {
   if (!ME) { setStatus("Sign in to log streaks."); return; }
-  const today = todayDate();
+  const targetDate = date ?? todayDate();
+  const isToday    = targetDate === todayDate();
 
   if (alreadyDone) {
-    if (!await hubConfirm({ message: "Undo today's log?", confirmLabel: "Undo", destructive: true })) return;
+    const label = isToday ? "today's log" : `log for ${targetDate}`;
+    if (!await hubConfirm({ message: `Undo ${label}?`, confirmLabel: "Undo", destructive: true })) return;
     await db(
       `DELETE FROM streak_logs WHERE streak_id = ? AND logged_date = ? AND logged_by = ?`,
-      [streakId, today, ME.id]
+      [streakId, targetDate, ME.id]
     );
     if (logMap[streakId]) {
-      logMap[streakId] = logMap[streakId].filter(d => d !== today);
+      logMap[streakId] = logMap[streakId].filter(d => d !== targetDate);
     }
   } else {
     const id = crypto.randomUUID();
     try {
       await db(
         `INSERT INTO streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, ?, ?)`,
-        [id, streakId, ME.id, today, new Date().toISOString()]
+        [id, streakId, ME.id, targetDate, new Date().toISOString()]
       );
       if (!logMap[streakId]) logMap[streakId] = [];
-      logMap[streakId].push(today);
+      logMap[streakId].push(targetDate);
+      logMap[streakId].sort();
 
-      // Check for milestone
-      const { current } = computeStreaks(logMap[streakId]);
-      if (milestoneReached(current)) {
-        const streak = allStreaks.find(s => s.id === streakId);
-        await publishMilestone(streak, current);
+      // Only check milestones when logging today — retroactive logs don't count
+      if (isToday) {
+        const { current } = computeStreaks(logMap[streakId]);
+        if (milestoneReached(current)) {
+          const streak = allStreaks.find(s => s.id === streakId);
+          await publishMilestone(streak, current);
+        }
       }
     } catch (e) {
-      setStatus("Already logged today.");
+      setStatus(`Already logged for ${isToday ? "today" : targetDate}.`);
       return;
     }
   }
