@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "dev": "node -e \"const h=require('http'),fs=require('fs'),p=require('path');h.createServer((q,r)=>{const f=p.join('src',q.url==='/'?'index.html':q.url);try{r.end(fs.readFileSync(f))}catch{r.writeHead(404);r.end()}}).listen(3001,()=>console.log('Dev server: http://localhost:3001'))\"",
+    "dev": "node dev.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
