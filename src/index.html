@@ -544,24 +544,30 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
   if (alreadyDone) {
     const label = isToday ? "today's log" : `log for ${targetDate}`;
     if (!await hubConfirm({ message: `Undo ${label}?`, confirmLabel: "Undo", destructive: true })) return;
-    await db(
-      `DELETE FROM streak_logs WHERE streak_id = ? AND logged_date = ? AND logged_by = ?`,
-      [streakId, targetDate, ME.id]
-    );
-    if (logMap[streakId]) {
-      logMap[streakId] = logMap[streakId].filter(d => d !== targetDate);
+    const prev = logMap[streakId] ? [...logMap[streakId]] : [];
+    if (logMap[streakId]) logMap[streakId] = logMap[streakId].filter(d => d !== targetDate);
+    render();
+    try {
+      await db(
+        `DELETE FROM streak_logs WHERE streak_id = ? AND logged_date = ? AND logged_by = ?`,
+        [streakId, targetDate, ME.id]
+      );
+    } catch (e) {
+      logMap[streakId] = prev;
+      render();
+      setStatus("Failed to remove log. Please try again.");
     }
   } else {
     const id = crypto.randomUUID();
+    if (!logMap[streakId]) logMap[streakId] = [];
+    logMap[streakId].push(targetDate);
+    logMap[streakId].sort();
+    render();
     try {
       await db(
         `INSERT INTO streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, ?, ?)`,
         [id, streakId, ME.id, targetDate, new Date().toISOString()]
       );
-      if (!logMap[streakId]) logMap[streakId] = [];
-      logMap[streakId].push(targetDate);
-      logMap[streakId].sort();
-
       // Only check milestones when logging today — retroactive logs don't count
       if (isToday) {
         const { current } = computeStreaks(logMap[streakId]);
@@ -571,11 +577,11 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
         }
       }
     } catch (e) {
+      logMap[streakId] = logMap[streakId].filter(d => d !== targetDate);
+      render();
       setStatus(`Already logged for ${isToday ? "today" : targetDate}.`);
-      return;
     }
   }
-  render();
 };
 
 async function publishMilestone(streak, days) {
