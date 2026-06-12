@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Streaks Widget</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--hub-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      font-size: 13px;
+      background: #fff;
+      color: #111827;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header { display: flex; align-items: center; gap: 6px; padding: 10px 14px 8px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+    .header-icon { font-size: 14px; }
+    .header-title { font-size: 12px; font-weight: 600; color: #374151; flex: 1; }
+    .header-link { font-size: 11px; color: #6366f1; text-decoration: none; }
+    .header-link:hover { text-decoration: underline; }
+
+    .content { flex: 1; padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #9ca3af;
+      text-align: center;
+    }
+    .empty .icon { font-size: 1.8rem; }
+    .empty p { font-size: 12px; }
+
+    .streak-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .streak-row:last-child { border-bottom: none; }
+
+    .streak-emoji { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+    .streak-title { flex: 1; font-weight: 500; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .streak-count { font-size: 12px; font-weight: 600; color: #f97316; white-space: nowrap; }
+    .streak-status { font-size: 12px; margin-left: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-icon">🔥</span>
+  <span class="header-title">Streaks</span>
+  <a class="header-link" href="/run/streaks">Open</a>
+</div>
+
+<div class="content" id="content">
+  <div class="empty">
+    <span class="icon">🔥</span>
+    <p>No streaks yet</p>
+  </div>
+</div>
+
+<script type="module">
+import { esc } from "/hub-sdk.js";
+import { computeStreaks } from "./logic.js";
+
+const DB = window.__DB_URL ?? "";
+
+async function db(sql, params = []) {
+  if (!DB) return { rows: [] };
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, params }),
+  });
+  return res.json();
+}
+
+async function init() {
+  const { rows } = await db(`
+    SELECT s.id, s.title, s.emoji, sl.logged_date
+    FROM streaks s
+    LEFT JOIN streak_logs sl
+      ON sl.streak_id = s.id
+      AND sl.household_id = s.household_id
+    WHERE s.household_id = current_setting('app.household_id', true)::uuid
+      AND s.archived_at IS NULL
+      AND s.visibility IN ('adults', 'everyone')
+  `);
+  if (!rows.length) return;
+
+  const streaks = new Map();
+  for (const r of rows) {
+    if (!streaks.has(r.id)) streaks.set(r.id, { title: r.title, emoji: r.emoji, dates: [] });
+    if (r.logged_date) streaks.get(r.id).dates.push(r.logged_date);
+  }
+
+  const ranked = [...streaks.values()]
+    .map(s => ({ ...s, ...computeStreaks(s.dates) }))
+    .sort((a, b) => b.current - a.current)
+    .slice(0, 4);
+
+  if (!ranked.length) return;
+
+  const content = document.getElementById("content");
+  content.innerHTML = ranked.map(s => `
+    <div class="streak-row">
+      <span class="streak-emoji">${esc(s.emoji || "🔥")}</span>
+      <span class="streak-title">${esc(s.title)}</span>
+      <span class="streak-count">${s.current}d</span>
+      <span class="streak-status">${s.loggedToday ? "✅" : ""}</span>
+    </div>
+  `).join("");
+}
+
+init();
+</script>
+</body>
+</html>
