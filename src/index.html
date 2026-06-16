@@ -404,7 +404,7 @@ async function loadStreaks() {
     allStreaks = demoStreaks();
     return;
   }
-  const r = await db(`SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM streaks WHERE archived_at IS NULL AND ( owner_id = current_setting('app.member_id', true) OR visibility = 'everyone' OR (visibility = 'adults' AND current_setting('app.member_role', true) != 'child') OR current_setting('app.member_id', true) = '' ) ORDER BY created_at ASC`);
+  const r = await db(`SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM app_streaks__streaks WHERE archived_at IS NULL ORDER BY created_at ASC`);
   allStreaks = r.rows ?? [];
 }
 
@@ -418,7 +418,7 @@ async function loadLogs() {
   cutoff.setDate(cutoff.getDate() - 400);
   const since = cutoff.toISOString().slice(0, 10);
   const r = await db(
-    `SELECT streak_id, logged_date FROM streak_logs WHERE logged_date >= ? ORDER BY logged_date ASC`,
+    `SELECT streak_id, logged_date FROM app_streaks__streak_logs WHERE logged_date >= ? ORDER BY logged_date ASC`,
     [since]
   );
   logMap = {};
@@ -549,7 +549,7 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
     render();
     try {
       await db(
-        `DELETE FROM streak_logs WHERE streak_id = ? AND logged_date = ? AND logged_by = ?`,
+        `DELETE FROM app_streaks__streak_logs WHERE streak_id = ? AND logged_date = ? AND logged_by = ?`,
         [streakId, targetDate, ME.id]
       );
     } catch (e) {
@@ -565,7 +565,7 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
     render();
     try {
       await db(
-        `INSERT INTO streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, ?, ?)`,
         [id, streakId, ME.id, targetDate, new Date().toISOString()]
       );
       // Only check milestones when logging today — retroactive logs don't count
@@ -679,7 +679,7 @@ window.saveStreak = async function(existingId) {
   try {
     if (existingId) {
       await db(
-        `UPDATE streaks SET title=?, emoji=?, visibility=?, is_group=? WHERE id=?`,
+        `UPDATE app_streaks__streaks SET title=?, emoji=?, visibility=?, is_group=? WHERE id=?`,
         [title, emoji, visibility, isGroup, existingId]
       );
       const s = allStreaks.find(x => x.id === existingId);
@@ -689,7 +689,7 @@ window.saveStreak = async function(existingId) {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
       await db(
-        `INSERT INTO streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO app_streaks__streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [id, ME.id, title, emoji, visibility, isGroup, now]
       );
       allStreaks.push({ id, owner_id: ME.id, title, emoji, visibility, is_group: isGroup, created_at: now, archived_at: null });
@@ -714,7 +714,7 @@ window.archiveStreak = async function(streakId) {
     destructive: true,
   })) return;
 
-  await db(`UPDATE streaks SET archived_at=? WHERE id=?`, [new Date().toISOString(), streakId]);
+  await db(`UPDATE app_streaks__streaks SET archived_at=? WHERE id=?`, [new Date().toISOString(), streakId]);
   allStreaks = allStreaks.filter(x => x.id !== streakId);
   render();
 };

@@ -72,15 +72,6 @@ if (manifest.ai_access) {
         }
       });
 
-      it(`each SQL file filters by household_id`, () => {
-        for (const name of names) {
-          const path = join(__dirname, `../src/${dir}/${name}.sql`);
-          if (!existsSync(path)) continue;
-          const sql = readFileSync(path, "utf-8");
-          expect(sql.includes("household_id"), `src/${dir}/${name}.sql must filter by household_id`).toBe(true);
-        }
-      });
-
       it(`each SQL file is a single statement (no semicolons)`, () => {
         for (const name of names) {
           const path = join(__dirname, `../src/${dir}/${name}.sql`);

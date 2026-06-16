@@ -1,16 +1,14 @@
-INSERT INTO streak_logs (
+INSERT INTO app_streaks__streak_logs (
   id,
-  household_id,
   streak_id,
   logged_by,
   logged_date,
   created_at
 ) VALUES (
-  gen_random_uuid()::text,
-  current_setting('app.household_id', true)::uuid,
+  gen_random_uuid(),
   $1,
   'ai',
-  COALESCE($2, CURRENT_DATE::text),
-  NOW()::text
+  COALESCE($2, CURRENT_DATE),
+  datetime('now')
 )
-ON CONFLICT (household_id, streak_id, logged_date) DO NOTHING
+ON CONFLICT (streak_id, logged_date) DO NOTHING

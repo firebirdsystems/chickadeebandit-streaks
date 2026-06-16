@@ -19,6 +19,21 @@
     "label": "Streaks"
   },
   "storage": "db",
+  "row_policies": {
+    "streaks": {
+      "kind": "owner_or_visibility",
+      "member_column": "owner_id",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "adult_values": ["adults", "everyone"]
+    },
+    "streak_logs": {
+      "kind": "inherit_visibility",
+      "fk_column": "streak_id",
+      "parent_table": "streaks",
+      "writer_column": "logged_by"
+    }
+  },
   "exports": ["member-streaks"],
   "publishes": ["streak.milestone"],
   "widget": { "label": "Streaks", "size": "small" },
