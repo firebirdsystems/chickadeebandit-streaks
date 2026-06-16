@@ -92,7 +92,6 @@ async function init() {
     LEFT JOIN app_streaks__streak_logs sl
       ON sl.streak_id = s.id
     WHERE s.archived_at IS NULL
-      AND s.visibility IN ('adults', 'everyone')
   `);
   if (!rows.length) return;
 
