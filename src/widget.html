@@ -64,8 +64,7 @@
 
 <div class="content" id="content">
   <div class="empty">
-    <span class="icon">🔥</span>
-    <p>No streaks yet</p>
+    <span class="icon" style="opacity:0.4; font-size:1.2rem;">⏳</span>
   </div>
 </div>
 
@@ -93,7 +92,12 @@ async function init() {
       ON sl.streak_id = s.id
     WHERE s.archived_at IS NULL
   `);
-  if (!rows.length) return;
+  const content = document.getElementById("content");
+
+  if (!rows.length) {
+    content.innerHTML = `<div class="empty"><span class="icon">🔥</span><p>No streaks yet</p></div>`;
+    return;
+  }
 
   const streaks = new Map();
   for (const r of rows) {
@@ -106,9 +110,10 @@ async function init() {
     .sort((a, b) => b.current - a.current)
     .slice(0, 4);
 
-  if (!ranked.length) return;
-
-  const content = document.getElementById("content");
+  if (!ranked.length) {
+    content.innerHTML = `<div class="empty"><span class="icon">🔥</span><p>No streaks yet</p></div>`;
+    return;
+  }
   content.innerHTML = ranked.map(s => `
     <div class="streak-row">
       <span class="streak-emoji">${esc(s.emoji || "🔥")}</span>
