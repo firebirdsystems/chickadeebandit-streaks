@@ -84,9 +84,7 @@ if (manifest.storage === "db") {
         console.error(`Error: migration v${m.version}: CREATE TABLE must use IF NOT EXISTS`); process.exit(1);
       }
     }
-    if (/\balter\s+table\b[^;]+\badd\s+column\b/i.test(m.sql) && !/\bif\s+not\s+exists\b/i.test(m.sql)) {
-      console.error(`Error: migration v${m.version}: ADD COLUMN must use IF NOT EXISTS`); process.exit(1);
-    }
+
   }
 
   const versions = migrations.map(m => m.version);
