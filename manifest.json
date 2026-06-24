@@ -25,7 +25,8 @@
       "member_column": "owner_id",
       "visibility_column": "visibility",
       "everyone_values": ["everyone"],
-      "adult_values": ["adults", "everyone"]
+      "adult_values": ["adults", "everyone"],
+      "write_owner_only": true
     },
     "streak_logs": {
       "kind": "inherit_visibility",
@@ -36,6 +37,9 @@
   },
   "exports": ["member-streaks"],
   "publishes": ["streak.milestone"],
+  "publish_acls": {
+    "streak.milestone": { "require_role": "adult" }
+  },
   "widget": { "label": "Streaks", "size": "small" },
   "resource_limits": { "max_db_bytes": 52428800 },
   "icon": "🔥",

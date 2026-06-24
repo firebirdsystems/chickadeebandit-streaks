@@ -418,7 +418,7 @@ async function loadLogs() {
   cutoff.setDate(cutoff.getDate() - 400);
   const since = cutoff.toISOString().slice(0, 10);
   const r = await db(
-    `SELECT streak_id, logged_date FROM app_streaks__streak_logs WHERE logged_date >= ? ORDER BY logged_date ASC`,
+    `SELECT streak_id, logged_date FROM app_streaks__streak_logs WHERE logged_date >= ? ORDER BY logged_date ASC LIMIT 10000`,
     [since]
   );
   logMap = {};
