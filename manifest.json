@@ -32,7 +32,8 @@
       "kind": "inherit_visibility",
       "fk_column": "streak_id",
       "parent_table": "streaks",
-      "writer_column": "logged_by"
+      "writer_column": "logged_by",
+      "insert_non_owner_parent_truthy_column": "is_group"
     }
   },
   "exports": ["member-streaks"],
