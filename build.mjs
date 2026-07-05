@@ -95,8 +95,22 @@ if (manifest.storage === "db") {
   console.log(`Migrations: ${migrations.length} file(s) validated ✓`);
 }
 
+// ── Read scenarios.json (optional per-app behavioral specs) ───────────────────
+// Shipped in the bundle so the hub's nightly app-exercise fan-in can replay
+// scenarios against the published bundle (see hub INTEGRATION_TESTS.md).
+let scenarios;
+const SCENARIOS_FILE = path.join(ROOT, "scenarios.json");
+if (fs.existsSync(SCENARIOS_FILE)) {
+  scenarios = JSON.parse(fs.readFileSync(SCENARIOS_FILE, "utf8"));
+}
+
 // ── Write bundle ──────────────────────────────────────────────────────────────
-const bundle = { manifest, ...(migrations.length ? { migrations } : {}), files };
+const bundle = {
+  manifest,
+  ...(migrations.length ? { migrations } : {}),
+  files,
+  ...(scenarios ? { scenarios } : {}),
+};
 
 fs.mkdirSync(DIST, { recursive: true });
 fs.writeFileSync(path.join(DIST, "bundle.json"), JSON.stringify(bundle, null, 2), "utf8");
