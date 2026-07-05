@@ -14,5 +14,5 @@ LEFT JOIN app_streaks__streak_logs sl
 WHERE s.archived_at  IS NULL
   AND s.visibility   IN ('adults', 'everyone')
 GROUP BY s.id, s.owner_id, s.title, s.emoji, s.visibility, s.is_group, s.created_at
-ORDER BY last_logged_date DESC NULLS LAST, s.title
+ORDER BY (last_logged_date IS NULL), last_logged_date DESC, s.title
 LIMIT 100

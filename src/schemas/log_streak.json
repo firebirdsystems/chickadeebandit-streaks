@@ -1,9 +1,27 @@
 {
   "type": "array",
   "items": [
-    { "type": "string", "minLength": 1, "description": "Streak ID (from active_streaks query)" },
-    { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Date to log (YYYY-MM-DD) — omit or null for today" }
+    {
+      "type": "string",
+      "minLength": 1,
+      "description": "Streak ID (from active_streaks query)"
+    },
+    {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Date to log (YYYY-MM-DD) \u2014 omit or null for today"
+    },
+    {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Calling member's ID \u2014 the hub overwrites this with the authenticated member_id; pass null"
+    }
   ],
   "minItems": 1,
-  "maxItems": 2
+  "maxItems": 3
 }
