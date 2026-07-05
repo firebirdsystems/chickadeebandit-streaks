@@ -4,7 +4,8 @@
  *
  * Reads the app ID from manifest.json to construct the correct base path.
  *
- * hub-sdk.js is fetched from the app-template repo on first run and cached
+ * hub-sdk.js is fetched from the deployed hub (its canonical source is
+ * packages/hub-contract/src/hub-sdk.js in the hub repo) on first run and cached
  * locally as .hub-sdk.js (gitignored). If the cache is older than 24 hours
  * it is refreshed automatically. Falls back to a stale cache when offline.
  *
@@ -22,7 +23,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT      = parseInt(process.env.PORT ?? "3001", 10);
 const CACHE     = path.join(__dirname, ".hub-sdk.js");
-const SDK_URL   = "https://raw.githubusercontent.com/firebirdsystems/chickadeebandit-app-template/main/hub-sdk.js";
+const SDK_URL   = "https://www.chickadeebandit.com/hub-sdk.js";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "manifest.json"), "utf8"));
