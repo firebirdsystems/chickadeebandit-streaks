@@ -1,7 +1,7 @@
 {
   "id": "streaks",
   "name": "Streaks",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Track personal and family habits with streak counters. Create private or shared streaks, set up group challenges anyone can check off, and celebrate milestones together.",
   "entrypoint": "index.html",
   "runtime": "static",
@@ -33,7 +33,8 @@
       "fk_column": "streak_id",
       "parent_table": "streaks",
       "writer_column": "logged_by",
-      "insert_non_owner_parent_truthy_column": "is_group"
+      "insert_non_owner_parent_truthy_column": "is_group",
+      "retain_days": { "default": 365, "timestamp_column": "created_at", "override_key": "streak_history" }
     }
   },
   "exports": ["member-streaks"],
