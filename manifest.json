@@ -1,5 +1,6 @@
 {
   "id": "streaks",
+  "contexts": ["household", "shared_space"],
   "name": "Streaks",
   "version": "1.1.0",
   "description": "Track personal and family habits with streak counters. Create private or shared streaks, set up group challenges anyone can check off, and celebrate milestones together.",
