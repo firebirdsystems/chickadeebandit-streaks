@@ -20,6 +20,27 @@
     "label": "Streaks"
   },
   "storage": "db",
+    "member_references": {
+      "streaks": {
+        "column": "owner_id",
+        "on_removed": "delete",
+        "dependent_tables": [
+          {
+            "table": "streak_logs",
+            "foreign_key": "streak_id"
+          }
+        ]
+      },
+      "streak_logs": {
+        "column": "logged_by",
+        "on_removed": "keep"
+      }
+    },
+  "delete_cascades": {
+    "streaks": [
+      { "table": "streak_logs", "foreign_key": "streak_id" }
+    ]
+  },
   "row_policies": {
     "streaks": {
       "kind": "owner_or_visibility",

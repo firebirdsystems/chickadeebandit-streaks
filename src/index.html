@@ -528,7 +528,8 @@ function streakCard(s, showManage) {
       ${showManage && isOwner ? `
         <div class="streak-actions">
           <button class="btn btn-icon" title="Edit" onclick="window.openEditModal('${esc(s.id)}')">✏️</button>
-          <button class="btn btn-icon btn-danger" title="Archive" onclick="window.archiveStreak('${esc(s.id)}')">🗑</button>
+          <button class="btn btn-icon" title="Archive" onclick="window.archiveStreak('${esc(s.id)}')">📦</button>
+          <button class="btn btn-icon btn-danger" title="Delete" onclick="window.deleteStreak('${esc(s.id)}')">🗑</button>
         </div>` : ""}
     </div>
   `;
@@ -716,6 +717,30 @@ window.archiveStreak = async function(streakId) {
 
   await db(`UPDATE app_streaks__streaks SET archived_at=? WHERE id=?`, [new Date().toISOString(), streakId]);
   allStreaks = allStreaks.filter(x => x.id !== streakId);
+  render();
+};
+
+window.deleteStreak = async function(streakId) {
+  const s = allStreaks.find(x => x.id === streakId);
+  if (!s) return;
+  if (!await hubConfirm({
+    message: `Delete "${s.title}"?`,
+    description: s.is_group
+      ? "Permanently removes the streak and everyone's log history on it. This can't be undone."
+      : "Permanently removes the streak and its entire log history. This can't be undone.",
+    confirmLabel: "Delete",
+    destructive: true,
+  })) return;
+
+  // One statement: manifest delete_cascades removes the streak's logs in the
+  // same transactional batch. The logs could not be deleted here — streak_logs
+  // is inherit_visibility with a writer column, so on a group streak another
+  // member's logs were unreachable by app SQL (the owner included) once the
+  // parent was gone. Only the owner can issue this delete (write_owner_only),
+  // which is the same authority that gates the cascade.
+  await db(`DELETE FROM app_streaks__streaks WHERE id = ?`, [streakId]);
+  allStreaks = allStreaks.filter(x => x.id !== streakId);
+  delete logMap[streakId];
   render();
 };
 

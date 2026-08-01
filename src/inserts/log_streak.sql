@@ -7,7 +7,7 @@ INSERT INTO app_streaks__streak_logs (
 ) VALUES (
   lower(hex(randomblob(16))),
   $1,
-  COALESCE($2, CURRENT_DATE),
+  COALESCE($2, :today),
   $3,
   datetime('now')
 )
