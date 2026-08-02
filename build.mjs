@@ -95,6 +95,120 @@ if (manifest.storage === "db") {
   console.log(`Migrations: ${migrations.length} file(s) validated ✓`);
 }
 
+// ── Validate agenda / glance surfaces ─────────────────────────────────────────
+// The hub re-validates these at publish time and refuses to install a broken
+// one, so without a local check the first sign of a typo is a failed install
+// (or, for a display column, a silently dropped widget). These are the
+// structural rules only — the hub remains the authority.
+function surfaceErrors(m) {
+  const errs = [];
+  // Output aliases the query actually produces: every explicit `AS name`, plus
+  // bare selected columns, which are their own alias (`SELECT title` yields
+  // "title", `SELECT b.name` yields "name").
+  const aliasesOf = (q) => {
+    const out = new Set([...q.matchAll(/\bAS\s+([A-Za-z_][A-Za-z0-9_]*)/gi)].map(x => x[1]));
+    const sel = /^\s*SELECT\s+([\s\S]*?)\sFROM\s/i.exec(q);
+    if (sel) {
+      let depth = 0, cur = "";
+      const items = [];
+      for (const ch of sel[1]) {
+        if (ch === "(") depth++;
+        else if (ch === ")") depth--;
+        if (ch === "," && depth === 0) { items.push(cur); cur = ""; } else cur += ch;
+      }
+      items.push(cur);
+      for (const raw of items) {
+        const t = raw.trim();
+        if (/\bAS\b/i.test(t)) continue;
+        const bare = /^([A-Za-z_][A-Za-z0-9_]*)\.?([A-Za-z_][A-Za-z0-9_]*)?$/.exec(t);
+        if (bare) out.add(bare[2] ?? bare[1]);
+      }
+    }
+    return out;
+  };
+  const limitOf = (q) => { const x = /\bLIMIT\s+(\d+)\s*$/i.exec(q.trim()); return x ? parseInt(x[1], 10) : null; };
+
+  const checkQuery = (q, where) => {
+    if (typeof q !== "string" || !q.trim()) { errs.push(`${where}.source.query must be a non-empty string`); return false; }
+    if (!/^\s*SELECT\b/i.test(q)) errs.push(`${where}.source.query must be a single SELECT`);
+    if (q.includes(";")) errs.push(`${where}.source.query must not contain a semicolon`);
+    if (/\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE)\b/i.test(q)) errs.push(`${where}.source.query must be read-only`);
+    return true;
+  };
+
+  const agenda = m.agenda;
+  if (agenda && agenda.source?.kind === "sql") {
+    const q = agenda.source.query;
+    if (checkQuery(q, "manifest.agenda")) {
+      const aliases = aliasesOf(q);
+      for (const req of ["title", "when_at"]) {
+        if (!aliases.has(req)) errs.push(`manifest.agenda.source.query must select an "${req}" alias`);
+      }
+      const lim = limitOf(q);
+      if (lim === null) errs.push("manifest.agenda.source.query must end with a LIMIT");
+      else if (lim < 1 || lim > 20) errs.push(`manifest.agenda.source.query LIMIT must be 1-20 (got ${lim})`);
+      // A day token has to narrow the scan, not just be selected or sorted on.
+      // It counts as filtering if it appears anywhere in the WHERE / JOIN ... ON
+      // region, including nested in a function call -- occasions compares
+      // `event_month = CAST(strftime('%m', :today) AS INTEGER)`.
+      const tokens = [...q.matchAll(/:(today|day_start|day_end)\b/g)].map(x => x[0]);
+      if (tokens.length > 0) {
+        const anchor = /\bWHERE\b|\bON\b/i.exec(q);
+        const filterRegion = anchor ? q.slice(anchor.index).replace(/\bORDER\s+BY\b[\s\S]*$/i, "") : "";
+        if (!tokens.some(t => filterRegion.includes(t))) {
+          errs.push(`manifest.agenda.source.query uses ${tokens[0]} but never filters on it`);
+        }
+      }
+    }
+  }
+
+  const glance = m.glance;
+  if (glance && glance.source?.kind === "sql") {
+    const q = glance.source.query;
+    if (checkQuery(q, "manifest.glance")) {
+      const aliases = aliasesOf(q);
+      const d = glance.display ?? {};
+      const TEMPLATES = { stat: ["value"], list: ["title"], badge: ["count"] };
+      if (!TEMPLATES[d.template]) {
+        errs.push('manifest.glance.display.template must be "stat", "list", or "badge"');
+      } else {
+        for (const req of TEMPLATES[d.template]) {
+          if (!d[req]) errs.push(`manifest.glance.display.${req} is required for a ${d.template} glance`);
+        }
+        // Every display field names an output alias of the query.
+        for (const f of ["value", "title", "subtitle", "when", "icon", "owner", "count"]) {
+          if (d[f] !== undefined && !aliases.has(d[f])) {
+            errs.push(`manifest.glance.display.${f} "${d[f]}" is not one of the query's selected columns`);
+          }
+        }
+        const lim = limitOf(q);
+        if (d.template === "list" && lim !== null && lim > 5) {
+          errs.push(`manifest.glance.source.query LIMIT must be at most 5 for a list glance (got ${lim})`);
+        }
+      }
+      if (glance.ambient_card !== undefined && glance.ambient_card !== "countdown") {
+        errs.push('manifest.glance.ambient_card must be "countdown"');
+      }
+      if (glance.ambient_card === "countdown" && d.template !== "list") {
+        errs.push('manifest.glance.ambient_card "countdown" requires display.template "list"');
+      }
+    }
+  }
+  return errs;
+}
+
+{
+  const errs = surfaceErrors(manifest);
+  if (errs.length > 0) {
+    for (const e of errs) console.error(`Error: ${e}`);
+    process.exit(1);
+  }
+  if (manifest.agenda || manifest.glance) {
+    const which = [manifest.agenda && "agenda", manifest.glance && "glance"].filter(Boolean).join(" + ");
+    console.log(`Surfaces: ${which} validated ✓`);
+  }
+}
+
 // ── Read scenarios.json (optional per-app behavioral specs) ───────────────────
 // Shipped in the bundle so the hub's nightly app-exercise fan-in can replay
 // scenarios against the published bundle (see hub INTEGRATION_TESTS.md).

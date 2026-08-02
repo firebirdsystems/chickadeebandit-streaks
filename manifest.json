@@ -16,10 +16,47 @@
     "default_audience": "everyone",
     "requires_approval": false
   },
+  "agenda": {"kind": "other", "label": "Streak", "source": {"kind": "sql", "query": "SELECT s.id AS id, s.title AS title, s.owner_id AS member_id, :today AS when_at, CASE WHEN l.id IS NULL THEN 0 ELSE 1 END AS done FROM app_streaks__streaks s LEFT JOIN app_streaks__streak_logs l ON l.streak_id = s.id AND l.logged_date = :today WHERE s.archived_at IS NULL LIMIT 20"}},
+  "glance": {"source": {"kind": "sql", "query": "SELECT COUNT(*) AS n FROM app_streaks__streaks s LEFT JOIN app_streaks__streak_logs l ON l.streak_id = s.id AND l.logged_date = :today WHERE s.archived_at IS NULL AND l.id IS NULL LIMIT 1"}, "display": {"template": "badge", "count": "n", "label": "streaks to keep", "severity": "warn"}},
   "nav": {
     "label": "Streaks"
   },
   "storage": "db",
+  "automation_actions": {
+    "start_streak": {
+      "title": "Start a streak for a member",
+      "description": "Begin a streak when another app's event fires — a habit taken up, a goal set, a routine someone commits to.",
+      "params": {
+        "owner_id": {
+          "type": "member",
+          "label": "Whose streak",
+          "required": true
+        },
+        "title": {
+          "type": "text",
+          "label": "Streak title",
+          "required": true
+        }
+      },
+      "dedupe": {
+        "table": "streaks",
+        "column": "source_event_id"
+      },
+      "steps": [
+        {
+          "op": "insert",
+          "table": "streaks",
+          "values": {
+            "id": "$uuid",
+            "owner_id": ":owner_id",
+            "title": ":title",
+            "created_at": "$now",
+            "source_event_id": "$event_id"
+          }
+        }
+      ]
+    }
+  },
     "member_references": {
       "streaks": {
         "column": "owner_id",
