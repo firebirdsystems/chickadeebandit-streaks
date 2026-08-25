@@ -41,6 +41,56 @@ function readDir(dir, base = "") {
 const files = readDir(SRC);
 if (!files["index.html"]) { console.error("Error: src/index.html is required"); process.exit(1); }
 
+// ── Validate inline scripts parse ─────────────────────────────────────────────
+// An app's whole UI is one inline `<script type="module">`, and nothing in the
+// pipeline parses it: the bundle treats src/ as opaque strings, the hub
+// validates the manifest rather than the markup, and logic.test.mjs never loads
+// index.html. A duplicate top-level declaration is a SyntaxError the browser
+// raises before the first statement runs — the app installs, renders its static
+// markup, and does nothing (tasks 1.5.1: "Identifier 'dbBatch' has already been
+// declared"). So every inline script is parsed here, the way the browser will,
+// and duplicate top-level declarations are named explicitly.
+{
+  const { execFileSync } = await import("child_process");
+  const os = await import("os");
+  const errs = [];
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "inline-scripts-"));
+  let count = 0;
+  try {
+    for (const [name, html] of Object.entries(files)) {
+      if (!name.endsWith(".html")) continue;
+      for (const [, attrs = "", body] of html.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+        // External scripts and non-JS types (JSON, templates) are not compiled as JS.
+        if (!body.trim() || /\bsrc\s*=/.test(attrs) || /\btype\s*=\s*"(?!module")/.test(attrs)) continue;
+        count++;
+        const isModule = /\btype\s*=\s*"module"/.test(attrs);
+        const file = path.join(dir, `${count}.${isModule ? "mjs" : "cjs"}`);
+        fs.writeFileSync(file, body);
+        try {
+          execFileSync(process.execPath, ["--check", file], { stdio: "pipe" });
+        } catch (e) {
+          const detail = String(e.stderr ?? e.message).trim().split("\n").filter(Boolean).slice(0, 3).join(" | ");
+          errs.push(`${name}: inline script does not parse — ${detail}`);
+        }
+        const decls = [...body.matchAll(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)|^(?:const|let|class)\s+([A-Za-z_$][\w$]*)/gm)]
+          .map((m) => m[1] ?? m[2]);
+        const seen = new Set();
+        for (const decl of decls) {
+          if (seen.has(decl)) errs.push(`${name}: top-level "${decl}" is declared more than once`);
+          seen.add(decl);
+        }
+      }
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  if (errs.length > 0) {
+    for (const e of errs) console.error(`Error: ${e}`);
+    process.exit(1);
+  }
+  console.log(`Inline scripts: ${count} parsed ✓`);
+}
+
 // ── Read + validate migrations (storage:"db" apps only) ───────────────────────
 const MIGRATIONS_DIR = path.join(ROOT, "migrations");
 let migrations = [];
