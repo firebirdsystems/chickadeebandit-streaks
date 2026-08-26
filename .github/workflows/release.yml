@@ -5,6 +5,7 @@ on:
     branches: [main]
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   # Gate: validate this app against the hub's manifest/migration/ai_access
