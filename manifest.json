@@ -22,6 +22,9 @@
     "label": "Streaks"
   },
   "storage": "db",
+  "preload": {
+    "streaks": {"sql": "SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM app_streaks__streaks WHERE archived_at IS NULL ORDER BY created_at ASC"}
+  },
   "automation_actions": {
     "start_streak": {
       "title": "Start a streak for a member",
