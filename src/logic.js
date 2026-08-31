@@ -1,5 +1,10 @@
 /**
- * Returns today's date as YYYY-MM-DD in local time.
+ * Today on the DEVICE's calendar. This is the fallback, not the answer: the
+ * browser passes the household's day (hub-sdk `hubToday()`) into everything
+ * below, because `logged_date` is STORED — a streak logged from another
+ * timezone must land on the day the household is having, or the kitchen
+ * tablet's grid will never count it. This default exists so these functions
+ * stay pure and runnable under Node in tests.
  */
 export function todayDate() {
   const d = new Date();
@@ -13,15 +18,14 @@ export function todayDate() {
  * Returns the last N days (including today) as YYYY-MM-DD strings,
  * oldest first. Defaults to 7.
  */
-export function lastNDays(n = 7) {
+export function lastNDays(n = 7, today = todayDate()) {
   const days = [];
+  // Stepped in UTC off the anchor date, so the walk is calendar arithmetic and
+  // never re-reads the device clock partway down the list.
   for (let i = n - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    days.push(`${y}-${m}-${day}`);
+    const d = new Date(today + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() - i);
+    days.push(d.toISOString().slice(0, 10));
   }
   return days;
 }
@@ -29,13 +33,10 @@ export function lastNDays(n = 7) {
 /**
  * Returns yesterday's date as YYYY-MM-DD in local time.
  */
-export function yesterdayDate() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+export function yesterdayDate(today = todayDate()) {
+  const d = new Date(today + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
 }
 
 /**
@@ -46,13 +47,12 @@ export function yesterdayDate() {
  * best: longest consecutive run ever recorded
  * loggedToday: whether today's date appears in logDates
  */
-export function computeStreaks(logDates) {
+export function computeStreaks(logDates, today = todayDate()) {
   if (!logDates || logDates.length === 0) {
     return { current: 0, best: 0, loggedToday: false };
   }
 
-  const today = todayDate();
-  const yesterday = yesterdayDate();
+  const yesterday = yesterdayDate(today);
 
   // Deduplicate and sort ascending
   const unique = [...new Set(logDates)].sort();
@@ -91,8 +91,8 @@ export function computeStreaks(logDates) {
 /**
  * Returns true if today's date appears in logDates.
  */
-export function loggedToday(logDates) {
-  return computeStreaks(logDates).loggedToday;
+export function loggedToday(logDates, today = todayDate()) {
+  return computeStreaks(logDates, today).loggedToday;
 }
 
 /**

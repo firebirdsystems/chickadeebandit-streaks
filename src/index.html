@@ -349,8 +349,8 @@
 </div>
 
 <script type="module">
-import { computeStreaks, todayDate, lastNDays, milestoneReached } from "./logic.js";
-import { esc, isAdult, hubConfirm, memberColor, initial } from "/hub-sdk.js";
+import { computeStreaks, lastNDays, milestoneReached } from "./logic.js";
+import { esc, isAdult, hubConfirm, memberColor, initial, hubToday as todayDate } from "/hub-sdk.js";
 
 const CONTEXT     = window.__CONTEXT_URL     ?? "";
 const DB          = window.__DB_URL          ?? "";
@@ -414,8 +414,8 @@ async function loadLogs() {
     return;
   }
   // Load all logs for the last 400 days (enough for best streak calculation)
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 400);
+  const cutoff = new Date(todayDate() + "T00:00:00Z");
+  cutoff.setUTCDate(cutoff.getUTCDate() - 400);
   const since = cutoff.toISOString().slice(0, 10);
   const r = await db(
     `SELECT streak_id, logged_date FROM app_streaks__streak_logs WHERE logged_date >= ? ORDER BY logged_date ASC LIMIT 10000`,
@@ -468,7 +468,7 @@ const DAY_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 function streakCard(s, showManage) {
   const logs    = logMap[s.id] ?? [];
   const logSet  = new Set(logs);
-  const { current, best, loggedToday: done } = computeStreaks(logs);
+  const { current, best, loggedToday: done } = computeStreaks(logs, todayDate());
   const canLog  = s.is_group || s.owner_id === ME?.id;
   const isOwner = s.owner_id === ME?.id;
   const today   = todayDate();
@@ -488,7 +488,7 @@ function streakCard(s, showManage) {
 
   const weekRow = canLog ? `
     <div class="week-row">
-      ${lastNDays(7).map(date => {
+      ${lastNDays(7, todayDate()).map(date => {
         const isLogged = logSet.has(date);
         const isToday  = date === today;
         const letter   = DAY_LETTERS[new Date(date + "T12:00:00").getDay()].slice(0, 1);
@@ -571,7 +571,7 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
       );
       // Only check milestones when logging today — retroactive logs don't count
       if (isToday) {
-        const { current } = computeStreaks(logMap[streakId]);
+        const { current } = computeStreaks(logMap[streakId], todayDate());
         if (milestoneReached(current)) {
           const streak = allStreaks.find(s => s.id === streakId);
           await publishMilestone(streak, current);
@@ -787,8 +787,8 @@ function demoStreaks() {
 function demoLogs() {
   const today = todayDate();
   const offset = n => {
-    const d = new Date(today + "T00:00:00");
-    d.setDate(d.getDate() + n);
+    const d = new Date(today + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + n);
     return d.toISOString().slice(0, 10);
   };
   return {
