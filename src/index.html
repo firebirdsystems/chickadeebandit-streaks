@@ -350,7 +350,7 @@
 
 <script type="module">
 import { computeStreaks, lastNDays, milestoneReached } from "./logic.js";
-import { esc, isAdult, hubConfirm, memberColor, initial, hubToday as todayDate } from "/hub-sdk.js";
+import { esc, isAdult, hubConfirm, memberColor, initial, hubToday } from "/hub-sdk.js";
 
 const CONTEXT     = window.__CONTEXT_URL     ?? "";
 const DB          = window.__DB_URL          ?? "";
@@ -414,7 +414,7 @@ async function loadLogs() {
     return;
   }
   // Load all logs for the last 400 days (enough for best streak calculation)
-  const cutoff = new Date(todayDate() + "T00:00:00Z");
+  const cutoff = new Date(hubToday() + "T00:00:00Z");
   cutoff.setUTCDate(cutoff.getUTCDate() - 400);
   const since = cutoff.toISOString().slice(0, 10);
   const r = await db(
@@ -468,10 +468,10 @@ const DAY_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 function streakCard(s, showManage) {
   const logs    = logMap[s.id] ?? [];
   const logSet  = new Set(logs);
-  const { current, best, loggedToday: done } = computeStreaks(logs, todayDate());
+  const { current, best, loggedToday: done } = computeStreaks(logs, hubToday());
   const canLog  = s.is_group || s.owner_id === ME?.id;
   const isOwner = s.owner_id === ME?.id;
-  const today   = todayDate();
+  const today   = hubToday();
 
   const owner = members.find(m => m.id === s.owner_id);
   const ownerName = owner ? esc(owner.name) : "";
@@ -488,7 +488,7 @@ function streakCard(s, showManage) {
 
   const weekRow = canLog ? `
     <div class="week-row">
-      ${lastNDays(7, todayDate()).map(date => {
+      ${lastNDays(7, hubToday()).map(date => {
         const isLogged = logSet.has(date);
         const isToday  = date === today;
         const letter   = DAY_LETTERS[new Date(date + "T12:00:00").getDay()].slice(0, 1);
@@ -539,8 +539,8 @@ function streakCard(s, showManage) {
 
 window.toggleLog = async function(streakId, alreadyDone, date = null) {
   if (!ME) { setStatus("Sign in to log streaks."); return; }
-  const targetDate = date ?? todayDate();
-  const isToday    = targetDate === todayDate();
+  const targetDate = date ?? hubToday();
+  const isToday    = targetDate === hubToday();
 
   if (alreadyDone) {
     const label = isToday ? "today's log" : `log for ${targetDate}`;
@@ -571,7 +571,7 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
       );
       // Only check milestones when logging today — retroactive logs don't count
       if (isToday) {
-        const { current } = computeStreaks(logMap[streakId], todayDate());
+        const { current } = computeStreaks(logMap[streakId], hubToday());
         if (milestoneReached(current)) {
           const streak = allStreaks.find(s => s.id === streakId);
           await publishMilestone(streak, current);
@@ -785,7 +785,7 @@ function demoStreaks() {
 }
 
 function demoLogs() {
-  const today = todayDate();
+  const today = hubToday();
   const offset = n => {
     const d = new Date(today + "T00:00:00Z");
     d.setUTCDate(d.getUTCDate() + n);
