@@ -81,6 +81,7 @@
       { "table": "streak_logs", "foreign_key": "streak_id" }
     ]
   },
+  "db_plaintext_columns": ["is_group"],
   "row_policies": {
     "streaks": {
       "kind": "owner_or_visibility",
