@@ -111,10 +111,10 @@
       border: 1px solid;
       white-space: nowrap;
     }
-    .badge-private  { color: #7c3aed; border-color: #ddd6fe; background: #f5f3ff; }
-    .badge-adults   { color: #b45309; border-color: #fde68a; background: #fffbeb; }
-    .badge-everyone { color: #047857; border-color: #a7f3d0; background: #ecfdf5; }
-    .badge-group    { color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; }
+    .badge-private  { color: #7c3aed; border-color: #ddd6fe; background: var(--hub-bg, #f5f3ff); }
+    .badge-adults   { color: var(--hub-tint-warning-fg, #b45309); border-color: var(--hub-tint-warning-border, #fde68a); background: var(--hub-tint-warning, #fffbeb); }
+    .badge-everyone { color: var(--hub-tint-success-fg, #047857); border-color: var(--hub-tint-success-border, #a7f3d0); background: var(--hub-tint-success, #ecfdf5); }
+    .badge-group    { color: var(--hub-tint-info-fg, #1d4ed8); border-color: var(--hub-tint-info-border, #bfdbfe); background: var(--hub-tint-info, #eff6ff); }
 
     .streak-actions {
       display: flex;
@@ -152,9 +152,9 @@
     }
     .btn-log:hover:not(:disabled) { background: var(--hub-primary-hover, #4f46e5); }
     .btn-log.done {
-      background: #dcfce7;
-      color: #15803d;
-      border-color: #86efac;
+      background: var(--hub-tint-success, #dcfce7);
+      color: var(--hub-tint-success-fg, #15803d);
+      border-color: var(--hub-tint-success-border, #86efac);
     }
     .btn-log.done:hover:not(:disabled) { background: #bbf7d0; }
 
@@ -166,7 +166,7 @@
       background: var(--hub-surface, #fff);
     }
     .btn-danger { color: #dc2626; border-color: #fecaca; }
-    .btn-danger:hover:not(:disabled) { background: #fef2f2; }
+    .btn-danger:hover:not(:disabled) { background: var(--hub-bg, #fef2f2); }
 
     .week-row {
       display: flex;
@@ -303,7 +303,7 @@
       top: 3px; left: 3px;
       width: 16px; height: 16px;
       border-radius: 50%;
-      background: #fff;
+      background: var(--hub-surface, #fff);
       transition: transform .15s;
     }
     .toggle input:checked + .toggle-track::after { transform: translateX(18px); }
