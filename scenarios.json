@@ -1,0 +1,188 @@
+{
+  "scenarios": [
+    {
+      "name": "streak visibility: private is owner-only, adults hides from children, everyone is household-wide",
+      "members": { "owner": "adult", "other": "adult", "kid": "child" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, visibility, is_group, created_at) VALUES ('s_priv', ?, 'Therapy homework', 'private', 0, '2026-01-01T00:00:00Z'), ('s_adult', ?, 'No alcohol', 'adults', 0, '2026-01-01T00:00:01Z'), ('s_all', ?, 'Daily walk', 'everyone', 0, '2026-01-01T00:00:02Z')",
+          "params": ["{{owner}}", "{{owner}}", "{{owner}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES ('l_priv', 's_priv', ?, '2026-01-02', '2026-01-02T00:00:00Z'), ('l_adult', 's_adult', ?, '2026-01-02', '2026-01-02T00:00:00Z'), ('l_all', 's_all', ?, '2026-01-02', '2026-01-02T00:00:00Z')",
+          "params": ["{{owner}}", "{{owner}}", "{{owner}}"]
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "SELECT id FROM app_streaks__streaks",
+          "expect": { "status": 200, "rowCount": 3 }
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "SELECT id FROM app_streaks__streaks",
+          "expect": { "status": 200, "rowCount": 2, "rowsContain": [{ "id": "s_adult" }, { "id": "s_all" }] }
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "SELECT id FROM app_streaks__streak_logs",
+          "expect": { "status": 200, "rowCount": 2, "rowsContain": [{ "id": "l_adult" }, { "id": "l_all" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id FROM app_streaks__streaks",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "s_all" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id FROM app_streaks__streak_logs",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "l_all" }] }
+        }
+      ]
+    },
+    {
+      "name": "only the owner can edit a shared streak, even when everyone can see it",
+      "members": { "owner": "adult", "other": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, visibility, is_group, created_at) VALUES ('s1', ?, 'Daily walk', 'everyone', 0, '2026-01-01T00:00:00Z')",
+          "params": ["{{owner}}"]
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "UPDATE app_streaks__streaks SET archived_at = '2026-01-05T00:00:00Z' WHERE id = 's1'"
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "DELETE FROM app_streaks__streaks WHERE id = 's1'"
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "SELECT id FROM app_streaks__streaks WHERE archived_at IS NULL",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "s1" }] }
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "UPDATE app_streaks__streaks SET archived_at = '2026-01-05T00:00:00Z' WHERE id = 's1'",
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "SELECT id FROM app_streaks__streaks WHERE archived_at IS NULL",
+          "expect": { "status": 200, "rowCount": 0 }
+        }
+      ]
+    },
+    {
+      "name": "anyone who can see a group streak may check it off; a personal streak only by its owner; one check-off per day",
+      "members": { "owner": "adult", "kid": "child" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, visibility, is_group, created_at) VALUES ('s_group', ?, 'Family reading', 'everyone', 1, '2026-01-01T00:00:00Z'), ('s_solo', ?, 'Daily walk', 'everyone', 0, '2026-01-01T00:00:01Z')",
+          "params": ["{{owner}}", "{{owner}}"]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES ('l1', 's_group', ?, '2026-01-02', '2026-01-02T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES ('l2', 's_solo', ?, '2026-01-02', '2026-01-02T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES ('l3', 's_solo', ?, '2026-01-02', '2026-01-02T00:00:00Z')",
+          "params": ["{{owner}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES ('l4', 's_solo', ?, '2026-01-02', '2026-01-02T01:00:00Z')",
+          "params": ["{{owner}}"],
+          "expect": { "status": 400 }
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "SELECT id FROM app_streaks__streak_logs",
+          "expect": { "status": 200, "rowCount": 2, "rowsContain": [{ "id": "l1" }, { "id": "l3" }] }
+        }
+      ]
+    },
+    {
+      "name": "log_streak and unlog_streak toggle a day idempotently; active_streaks omits private streaks",
+      "members": { "owner": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, visibility, is_group, created_at) VALUES ('s1', ?, 'Daily walk', 'everyone', 0, '2026-01-01T00:00:00Z'), ('s_priv', ?, 'Journal', 'private', 0, '2026-01-01T00:00:01Z')",
+          "params": ["{{owner}}", "{{owner}}"]
+        },
+        {
+          "action": "named",
+          "as": "owner",
+          "kind": "insert",
+          "name": "log_streak",
+          "params": ["s1", "2026-01-03", "{{owner}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "named",
+          "as": "owner",
+          "kind": "insert",
+          "name": "log_streak",
+          "params": ["s1", "2026-01-03", "{{owner}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "SELECT logged_date FROM app_streaks__streak_logs WHERE streak_id = 's1'",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "logged_date": "2026-01-03" }] }
+        },
+        {
+          "action": "named",
+          "as": "owner",
+          "kind": "query",
+          "name": "active_streaks",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "s1", "total_logs": 1, "last_logged_date": "2026-01-03" }] }
+        },
+        {
+          "action": "named",
+          "as": "owner",
+          "kind": "delete",
+          "name": "unlog_streak",
+          "params": ["s1", "2026-01-03"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "SELECT id FROM app_streaks__streak_logs",
+          "expect": { "status": 200, "rowCount": 0 }
+        }
+      ]
+    }
+  ]
+}
