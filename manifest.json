@@ -100,7 +100,6 @@
       "retain_days": { "default": 365, "timestamp_column": "created_at", "override_key": "streak_history" }
     }
   },
-  "exports": ["member-streaks"],
   "publishes": ["streak.milestone"],
   "publish_acls": {
     "streak.milestone": { "require_role": "adult" }
