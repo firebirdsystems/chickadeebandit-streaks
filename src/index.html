@@ -320,7 +320,7 @@
 </head>
 <body>
 <div class="app-header">
-  <h1>🔥 Streaks</h1>
+  <h1><span id="page-glyph"></span> Streaks</h1>
   <span id="status-msg" class="status" style="flex:1"></span>
 </div>
 
@@ -335,7 +335,7 @@
   </div>
   <div id="mine-grid" class="streak-grid"></div>
   <div id="mine-empty" class="empty-state" style="display:none">
-    <div style="font-size:2.5rem">🔥</div>
+    <div id="mine-empty-art"></div>
     <p>No streaks yet. Create one to get started!</p>
   </div>
 </div>
@@ -343,14 +343,19 @@
 <div id="tab-family" class="tab-panel">
   <div id="family-grid" class="streak-grid"></div>
   <div id="family-empty" class="empty-state" style="display:none">
-    <div style="font-size:2.5rem">👨‍👩‍👧</div>
+    <div id="family-empty-art"></div>
     <p>No shared or group streaks yet.</p>
   </div>
 </div>
 
 <script type="module">
 import { computeStreaks, lastNDays, milestoneReached } from "./logic.js";
-import { esc, isAdult, hubConfirm, memberColor, initial, hubToday } from "/hub-sdk.js";
+import { esc, isAdult, hubConfirm, memberColor, initial, hubToday, glyph, chickadee } from "/hub-sdk.js";
+
+// Static markup cannot call the SDK, so the heading mark and empty-state art are drawn here.
+document.getElementById("page-glyph").innerHTML = glyph("flame");
+document.getElementById("mine-empty-art").innerHTML = chickadee("nest", { size: 72 });
+document.getElementById("family-empty-art").innerHTML = chickadee("nest", { size: 72 });
 
 const CONTEXT     = window.__CONTEXT_URL     ?? "";
 const DB          = window.__DB_URL          ?? "";
@@ -477,13 +482,13 @@ function streakCard(s, showManage) {
   const ownerName = owner ? esc(owner.name) : "";
 
   const visLabel = s.visibility === "private"
-    ? `<span class="badge badge-private">🔒 Private</span>`
+    ? `<span class="badge badge-private">${glyph("lock")} Private</span>`
     : s.visibility === "adults"
-      ? `<span class="badge badge-adults">👤 Adults</span>`
-      : `<span class="badge badge-everyone">🌍 Everyone</span>`;
+      ? `<span class="badge badge-adults">${glyph("shield")} Adults</span>`
+      : `<span class="badge badge-everyone">${glyph("house")} Everyone</span>`;
 
   const groupBadge = s.is_group
-    ? `<span class="badge badge-group">👥 Group</span>`
+    ? `<span class="badge badge-group">${glyph("people")} Group</span>`
     : "";
 
   const weekRow = canLog ? `
@@ -513,11 +518,11 @@ function streakCard(s, showManage) {
       <div class="streak-counts">
         <div class="count-block">
           <div class="count-val count-fire">${current}</div>
-          <div class="count-label">🔥 Current</div>
+          <div class="count-label">${glyph("flame")} Current</div>
         </div>
         <div class="count-block">
           <div class="count-val count-best">${best}</div>
-          <div class="count-label">⭐ Best</div>
+          <div class="count-label">${glyph("star")} Best</div>
         </div>
       </div>
       <div class="streak-badges">
@@ -527,9 +532,9 @@ function streakCard(s, showManage) {
       ${weekRow}
       ${showManage && isOwner ? `
         <div class="streak-actions">
-          <button class="btn btn-icon" title="Edit" onclick="window.openEditModal('${esc(s.id)}')">✏️</button>
-          <button class="btn btn-icon" title="Archive" onclick="window.archiveStreak('${esc(s.id)}')">📦</button>
-          <button class="btn btn-icon btn-danger" title="Delete" onclick="window.deleteStreak('${esc(s.id)}')">🗑</button>
+          <button class="btn btn-icon" title="Edit" aria-label="Edit" onclick="window.openEditModal('${esc(s.id)}')">${glyph("pencil")}</button>
+          <button class="btn btn-icon" title="Archive" aria-label="Archive" onclick="window.archiveStreak('${esc(s.id)}')">${glyph("archive")}</button>
+          <button class="btn btn-icon btn-danger" title="Delete" aria-label="Delete" onclick="window.deleteStreak('${esc(s.id)}')">${glyph("trash")}</button>
         </div>` : ""}
     </div>
   `;
@@ -635,9 +640,9 @@ function streakFormHtml(existing) {
       <div class="form-group">
         <label for="f-vis">Visibility</label>
         <select id="f-vis">
-          <option value="private"  ${!isEdit || existing.visibility==="private"  ? "selected" : ""}>🔒 Private — only me</option>
-          <option value="adults"   ${isEdit && existing.visibility==="adults"    ? "selected" : ""}>👤 Adults only</option>
-          <option value="everyone" ${isEdit && existing.visibility==="everyone"  ? "selected" : ""}>🌍 Everyone</option>
+          <option value="private"  ${!isEdit || existing.visibility==="private"  ? "selected" : ""}>Private — only me</option>
+          <option value="adults"   ${isEdit && existing.visibility==="adults"    ? "selected" : ""}>Adults only</option>
+          <option value="everyone" ${isEdit && existing.visibility==="everyone"  ? "selected" : ""}>Everyone</option>
         </select>
       </div>
       <div class="toggle-row">

@@ -36,7 +36,7 @@
       color: #9ca3af;
       text-align: center;
     }
-    .empty .icon { font-size: 1.8rem; }
+    .empty .icon { display: block; margin-bottom: 6px; }
     .empty p { font-size: 12px; }
 
     .streak-row {
@@ -57,19 +57,23 @@
 <body>
 
 <div class="header">
-  <span class="header-icon">🔥</span>
+  <span class="header-icon"></span>
   <span class="header-title">Streaks</span>
   <a class="header-link" href="/run/streaks">Open</a>
 </div>
 
 <div class="content" id="content">
   <div class="empty">
-    <span class="icon" style="opacity:0.4; font-size:1.2rem;">⏳</span>
+    <span class="icon" style="opacity:0.4;"></span>
   </div>
 </div>
 
 <script type="module">
-import { esc } from "/hub-sdk.js";
+import { esc, glyph, chickadee } from "/hub-sdk.js";
+
+// Static markup cannot call the SDK, so the header mark and loading mark are drawn here.
+document.querySelector(".header-icon").innerHTML = glyph("flame");
+document.querySelector(".empty .icon").innerHTML = glyph("hourglass");
 import { computeStreaks } from "./logic.js";
 
 const DB = window.__DB_URL ?? "";
@@ -95,7 +99,7 @@ async function init() {
   const content = document.getElementById("content");
 
   if (!rows.length) {
-    content.innerHTML = `<div class="empty"><span class="icon">🔥</span><p>No streaks yet</p></div>`;
+    content.innerHTML = `<div class="empty"><span class="icon">${chickadee("nest", { size: 56 })}</span><p>No streaks yet</p></div>`;
     return;
   }
 
@@ -111,7 +115,7 @@ async function init() {
     .slice(0, 4);
 
   if (!ranked.length) {
-    content.innerHTML = `<div class="empty"><span class="icon">🔥</span><p>No streaks yet</p></div>`;
+    content.innerHTML = `<div class="empty"><span class="icon">${chickadee("nest", { size: 56 })}</span><p>No streaks yet</p></div>`;
     return;
   }
   content.innerHTML = ranked.map(s => `
@@ -119,7 +123,7 @@ async function init() {
       <span class="streak-emoji">${esc(s.emoji || "🔥")}</span>
       <span class="streak-title">${esc(s.title)}</span>
       <span class="streak-count">${s.current}d</span>
-      <span class="streak-status">${s.loggedToday ? "✅" : ""}</span>
+      <span class="streak-status">${s.loggedToday ? glyph("tick") : ""}</span>
     </div>
   `).join("");
 }
