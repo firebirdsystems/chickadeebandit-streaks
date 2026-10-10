@@ -384,8 +384,7 @@ async function db(sql, params = []) {
 // ── Init ────────────────────────────────────────────────────────────────────
 
 (async () => {
-  await loadMembers();
-  await Promise.all([loadStreaks(), loadLogs()]);
+  await Promise.all([loadMembers(), loadStreaks(), loadLogs()]);
   render();
 })();
 
@@ -418,13 +417,12 @@ async function loadLogs() {
     logMap = demoLogs();
     return;
   }
-  // Load all logs for the last 400 days (enough for best streak calculation)
-  const cutoff = new Date(hubToday() + "T00:00:00Z");
-  cutoff.setUTCDate(cutoff.getUTCDate() - 400);
-  const since = cutoff.toISOString().slice(0, 10);
+  // Load all logs for the last 400 days (enough for best streak calculation).
+  // The cutoff is computed in SQL from the hub's today so the statement and its
+  // one param are the same on every open — manifest.preload.logs answers it.
   const r = await db(
-    `SELECT streak_id, logged_date FROM app_streaks__streak_logs WHERE logged_date >= ? ORDER BY logged_date ASC LIMIT 10000`,
-    [since]
+    `SELECT streak_id, logged_date FROM app_streaks__streak_logs WHERE logged_date >= date(?, '-400 days') ORDER BY logged_date ASC LIMIT 10000`,
+    [hubToday()]
   );
   logMap = {};
   for (const row of (r.rows ?? [])) {

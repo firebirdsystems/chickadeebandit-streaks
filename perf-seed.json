@@ -1,0 +1,416 @@
+{
+ "seed": [
+  {
+   "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, 0, strftime('%Y-%m-%dT%H:%M:%fZ','now','-30 days'))",
+   "params": [
+    "stk-1",
+    "{{me}}",
+    "Morning run",
+    "🏃",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, 0, strftime('%Y-%m-%dT%H:%M:%fZ','now','-29 days'))",
+   "params": [
+    "stk-2",
+    "{{me}}",
+    "Read 20 minutes",
+    "📚",
+    "private"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, 0, strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days'))",
+   "params": [
+    "stk-3",
+    "{{me}}",
+    "Drink 8 glasses of water",
+    "💧",
+    "adults"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, 1, strftime('%Y-%m-%dT%H:%M:%fZ','now','-27 days'))",
+   "params": [
+    "stk-4",
+    "{{me}}",
+    "Family walk after dinner",
+    "🌱",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, 0, strftime('%Y-%m-%dT%H:%M:%fZ','now','-26 days'))",
+   "params": [
+    "stk-5",
+    "{{me}}",
+    "Guitar practice",
+    "🎸",
+    "private"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streaks (id, owner_id, title, emoji, visibility, is_group, created_at) VALUES (?, ?, ?, ?, ?, 0, strftime('%Y-%m-%dT%H:%M:%fZ','now','-25 days'))",
+   "params": [
+    "stk-6",
+    "{{me}}",
+    "Stretch before bed",
+    "🧘",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now'), strftime('%Y-%m-%dT%H:%M:%fZ','now'))",
+   "params": [
+    "stk-l1",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-1 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days'))",
+   "params": [
+    "stk-l2",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-2 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days'))",
+   "params": [
+    "stk-l3",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-3 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days'))",
+   "params": [
+    "stk-l4",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-4 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days'))",
+   "params": [
+    "stk-l5",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-5 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days'))",
+   "params": [
+    "stk-l6",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-6 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days'))",
+   "params": [
+    "stk-l7",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-7 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days'))",
+   "params": [
+    "stk-l8",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-8 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days'))",
+   "params": [
+    "stk-l9",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-9 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days'))",
+   "params": [
+    "stk-l10",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-10 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days'))",
+   "params": [
+    "stk-l11",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-11 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days'))",
+   "params": [
+    "stk-l12",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-14 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-14 days'))",
+   "params": [
+    "stk-l13",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-15 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-15 days'))",
+   "params": [
+    "stk-l14",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-16 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days'))",
+   "params": [
+    "stk-l15",
+    "stk-1",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-1 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days'))",
+   "params": [
+    "stk-l16",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-2 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days'))",
+   "params": [
+    "stk-l17",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-3 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days'))",
+   "params": [
+    "stk-l18",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-4 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days'))",
+   "params": [
+    "stk-l19",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-5 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days'))",
+   "params": [
+    "stk-l20",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-6 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days'))",
+   "params": [
+    "stk-l21",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-7 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days'))",
+   "params": [
+    "stk-l22",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-8 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days'))",
+   "params": [
+    "stk-l23",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-9 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days'))",
+   "params": [
+    "stk-l24",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-12 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days'))",
+   "params": [
+    "stk-l25",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-13 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days'))",
+   "params": [
+    "stk-l26",
+    "stk-2",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now'), strftime('%Y-%m-%dT%H:%M:%fZ','now'))",
+   "params": [
+    "stk-l27",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-1 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days'))",
+   "params": [
+    "stk-l28",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-2 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days'))",
+   "params": [
+    "stk-l29",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-3 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days'))",
+   "params": [
+    "stk-l30",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-5 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days'))",
+   "params": [
+    "stk-l31",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-6 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days'))",
+   "params": [
+    "stk-l32",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-7 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days'))",
+   "params": [
+    "stk-l33",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-9 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days'))",
+   "params": [
+    "stk-l34",
+    "stk-3",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now'), strftime('%Y-%m-%dT%H:%M:%fZ','now'))",
+   "params": [
+    "stk-l35",
+    "stk-4",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-1 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days'))",
+   "params": [
+    "stk-l36",
+    "stk-4",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-3 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days'))",
+   "params": [
+    "stk-l37",
+    "stk-4",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-4 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days'))",
+   "params": [
+    "stk-l38",
+    "stk-4",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-7 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days'))",
+   "params": [
+    "stk-l39",
+    "stk-4",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-1 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days'))",
+   "params": [
+    "stk-l40",
+    "stk-5",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-2 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days'))",
+   "params": [
+    "stk-l41",
+    "stk-5",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-4 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days'))",
+   "params": [
+    "stk-l42",
+    "stk-5",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-8 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days'))",
+   "params": [
+    "stk-l43",
+    "stk-5",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_streaks__streak_logs (id, streak_id, logged_by, logged_date, created_at) VALUES (?, ?, ?, date('now','-9 days'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days'))",
+   "params": [
+    "stk-l44",
+    "stk-5",
+    "{{me}}"
+   ]
+  }
+ ]
+}

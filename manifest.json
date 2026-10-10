@@ -23,7 +23,8 @@
   },
   "storage": "db",
   "preload": {
-    "streaks": {"sql": "SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM app_streaks__streaks WHERE archived_at IS NULL ORDER BY created_at ASC"}
+    "streaks": {"sql": "SELECT id, owner_id, title, emoji, visibility, is_group, created_at, archived_at FROM app_streaks__streaks WHERE archived_at IS NULL ORDER BY created_at ASC"},
+    "logs": {"sql": "SELECT streak_id, logged_date FROM app_streaks__streak_logs WHERE logged_date >= date(?, '-400 days') ORDER BY logged_date ASC LIMIT 10000", "params": [":today"]}
   },
   "automation_actions": {
     "start_streak": {
