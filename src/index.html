@@ -222,6 +222,9 @@
       color: var(--hub-text-muted, #6b7280);
     }
     .empty-state p { margin-top: 8px; font-size: 0.9rem; }
+    .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.9rem; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .load-error[hidden] { display: none; }
+    .load-error-retry { background: none; border: 1px solid currentColor; border-radius: 8px; padding: 5px 10px; font: inherit; font-weight: 600; color: inherit; cursor: pointer; flex-shrink: 0; }
 
     /* Modal */
     .modal-backdrop {
@@ -324,13 +327,15 @@
   <span id="status-msg" class="status" style="flex:1"></span>
 </div>
 
+<div id="load-error" hidden class="load-error" data-testid="load-error" role="alert"><span>Couldn’t load streaks.</span> <button type="button" class="load-error-retry" data-testid="load-retry">Try again</button></div>
+
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('mine')">Mine</button>
   <button class="tab-btn" onclick="switchTab('family')">Family</button>
 </div>
 
 <div id="tab-mine" class="tab-panel active">
-  <div class="section-actions">
+  <div class="section-actions" id="mine-actions">
     <button class="btn btn-primary" onclick="openCreateModal()">+ New Streak</button>
   </div>
   <div id="mine-grid" class="streak-grid"></div>
@@ -378,15 +383,27 @@ async function db(sql, params = []) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
-  return res.json();
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
+  return json;
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
 
-(async () => {
-  await Promise.all([loadMembers(), loadStreaks(), loadLogs()]);
+// A failed load still draws the page, under a banner that stays until a load
+// succeeds. While it shows, no grid is called empty and no streak can be added.
+let loadFailed = false;
+async function firstLoad() {
+  try {
+    await Promise.all([loadMembers(), loadStreaks(), loadLogs()]);
+    loadFailed = false;
+  } catch { loadFailed = true; }
+  document.getElementById("load-error").hidden = !loadFailed;
+  document.getElementById("mine-actions").style.display = loadFailed ? "none" : "";
   render();
-})();
+}
+document.querySelector('[data-testid="load-retry"]').addEventListener("click", firstLoad);
+firstLoad();
 
 async function loadMembers() {
   if (!CONTEXT) {
@@ -397,10 +414,13 @@ async function loadMembers() {
     ];
     return;
   }
-  try {
-    const res = await fetch(`${CONTEXT}?keys=family.members`);
-    members = ((await res.json())["family.members"]) ?? [];
-  } catch { members = []; }
+  // A failed read throws: firstLoad shows the load banner, not streaks with nobody's name on them.
+  const res = await fetch(`${CONTEXT}?keys=family.members`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || typeof data !== "object" || data.error) throw new Error("Couldn’t reach the hub. Try again.");
+  // The hub answers 200 and names a key it could not resolve in $errors: that read failed too.
+  if (Array.isArray(data.$errors) && data.$errors.includes("family.members")) throw new Error("Couldn’t reach the hub. Try again.");
+  members = data["family.members"] ?? [];
 }
 
 async function loadStreaks() {
@@ -459,7 +479,7 @@ function renderGrid(gridId, emptyId, streaks, isMine) {
   const empty = document.getElementById(emptyId);
   if (!streaks.length) {
     grid.innerHTML = "";
-    empty.style.display = "";
+    empty.style.display = loadFailed ? "none" : "";
     return;
   }
   empty.style.display = "none";
@@ -552,10 +572,17 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
     if (logMap[streakId]) logMap[streakId] = logMap[streakId].filter(d => d !== targetDate);
     render();
     try {
-      await db(
+      const { changed } = await db(
         `DELETE FROM app_streaks__streak_logs WHERE streak_id = ? AND logged_date = ? AND logged_by = ?`,
         [streakId, targetDate, ME.id]
       );
+      // Only the member who logged the day can remove it; on a shared streak
+      // the day may be someone else's.
+      if (changed === 0) {
+        logMap[streakId] = prev;
+        render();
+        setStatus("Only the person who logged that day can undo it.");
+      }
     } catch (e) {
       logMap[streakId] = prev;
       render();
@@ -702,7 +729,7 @@ window.saveStreak = async function(existingId) {
     render();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Create"; }
-    throw e;
+    setStatus(e.message);
   }
 };
 
@@ -718,7 +745,9 @@ window.archiveStreak = async function(streakId) {
     destructive: true,
   })) return;
 
-  await db(`UPDATE app_streaks__streaks SET archived_at=? WHERE id=?`, [new Date().toISOString(), streakId]);
+  try {
+    await db(`UPDATE app_streaks__streaks SET archived_at=? WHERE id=?`, [new Date().toISOString(), streakId]);
+  } catch (e) { setStatus(e.message); return; }
   allStreaks = allStreaks.filter(x => x.id !== streakId);
   render();
 };
@@ -741,7 +770,9 @@ window.deleteStreak = async function(streakId) {
   // member's logs were unreachable by app SQL (the owner included) once the
   // parent was gone. Only the owner can issue this delete (write_owner_only),
   // which is the same authority that gates the cascade.
-  await db(`DELETE FROM app_streaks__streaks WHERE id = ?`, [streakId]);
+  try {
+    await db(`DELETE FROM app_streaks__streaks WHERE id = ?`, [streakId]);
+  } catch (e) { setStatus(e.message); return; }
   allStreaks = allStreaks.filter(x => x.id !== streakId);
   delete logMap[streakId];
   render();
