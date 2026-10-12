@@ -52,6 +52,7 @@
     .streak-title { flex: 1; font-weight: 500; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .streak-count { font-size: 12px; font-weight: 600; color: #f97316; white-space: nowrap; }
     .streak-status { font-size: 12px; margin-left: 4px; }
+    .load-error { margin: 8px; padding: 8px 10px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.8rem; }
   </style>
 </head>
 <body>
@@ -131,7 +132,7 @@ async function init() {
 }
 
 init().catch(() => {
-  document.getElementById("content").innerHTML = `<div class="empty"><p>Couldn’t load streaks.</p></div>`;
+  document.getElementById("content").innerHTML = `<div class="load-error" data-testid="load-error" role="alert">Couldn’t load the streaks.</div>`;
 });
 </script>
 </body>

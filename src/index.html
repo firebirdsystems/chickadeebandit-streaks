@@ -729,7 +729,8 @@ window.saveStreak = async function(existingId) {
     render();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Create"; }
-    setStatus(e.message);
+    console.error(e);
+    setStatus("Couldn’t save the streak — try again.");
   }
 };
 
@@ -747,7 +748,7 @@ window.archiveStreak = async function(streakId) {
 
   try {
     await db(`UPDATE app_streaks__streaks SET archived_at=? WHERE id=?`, [new Date().toISOString(), streakId]);
-  } catch (e) { setStatus(e.message); return; }
+  } catch (e) { console.error(e); setStatus("Couldn’t archive the streak — try again."); return; }
   allStreaks = allStreaks.filter(x => x.id !== streakId);
   render();
 };
@@ -772,7 +773,7 @@ window.deleteStreak = async function(streakId) {
   // which is the same authority that gates the cascade.
   try {
     await db(`DELETE FROM app_streaks__streaks WHERE id = ?`, [streakId]);
-  } catch (e) { setStatus(e.message); return; }
+  } catch (e) { console.error(e); setStatus("Couldn’t delete the streak — try again."); return; }
   allStreaks = allStreaks.filter(x => x.id !== streakId);
   delete logMap[streakId];
   render();
