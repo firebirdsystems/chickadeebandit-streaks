@@ -354,7 +354,7 @@
 </div>
 
 <script type="module">
-import { computeStreaks, lastNDays, milestoneReached } from "./logic.js";
+import { computeStreaks, lastNDays, milestoneReached, isDuplicateLogError } from "./logic.js";
 import { esc, isAdult, hubConfirm, memberColor, initial, hubToday, glyph, chickadee } from "/hub-sdk.js";
 
 // Static markup cannot call the SDK, so the heading mark and empty-state art are drawn here.
@@ -608,9 +608,16 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
         }
       }
     } catch (e) {
-      logMap[streakId] = logMap[streakId].filter(d => d !== targetDate);
+      // Only the hub's one-log-per-day refusal means the day is already
+      // logged: it stays marked. Any other failure is shown as not logged.
+      if (isDuplicateLogError(e)) {
+        setStatus(`Already logged for ${isToday ? "today" : targetDate}.`);
+        return;
+      }
+      console.error(e);
+      logMap[streakId] = (logMap[streakId] ?? []).filter(d => d !== targetDate);
       render();
-      setStatus(`Already logged for ${isToday ? "today" : targetDate}.`);
+      setStatus("Couldn’t log the streak — try again.");
     }
   }
 };

@@ -104,3 +104,16 @@ export const MILESTONES = [3, 7, 14, 30, 60, 100, 200, 365];
 export function milestoneReached(days) {
   return MILESTONES.includes(days);
 }
+
+/**
+ * True only when a failed log INSERT was refused because that streak already
+ * has a log for that day (the UNIQUE index on streak_id + logged_date). The hub
+ * gives a refused statement no code of its own — it answers HTTP 400 with
+ * SQLite's message — so the message is the only signal, and it must name both
+ * the UNIQUE refusal and `logged_date`. Anything else (an outage, a row-policy
+ * refusal, a full database) is NOT a duplicate.
+ */
+export function isDuplicateLogError(error) {
+  const message = typeof error?.message === "string" ? error.message : "";
+  return /UNIQUE constraint failed:[^:]*\blogged_date\b/i.test(message);
+}

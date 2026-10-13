@@ -7,6 +7,7 @@ import {
   loggedToday,
   milestoneReached,
   MILESTONES,
+  isDuplicateLogError,
 } from "../src/logic.js";
 
 // Helper: offset today by N days (negative = past)
@@ -169,5 +170,39 @@ describe("milestoneReached", () => {
     expect(milestoneReached(1)).toBe(false);
     expect(milestoneReached(5)).toBe(false);
     expect(milestoneReached(50)).toBe(false);
+  });
+});
+
+describe("isDuplicateLogError", () => {
+  // The hub answers a refused statement with HTTP 400 and SQLite's own message;
+  // the page's db() helper throws it as the Error's message.
+  it("recognises the one-log-per-day UNIQUE refusal", () => {
+    expect(isDuplicateLogError(new Error(
+      "UNIQUE constraint failed: app_streaks__streak_logs.streak_id, app_streaks__streak_logs.logged_date: SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_UNIQUE)"
+    ))).toBe(true);
+    expect(isDuplicateLogError(new Error(
+      "D1_ERROR: UNIQUE constraint failed: app_streaks__streak_logs.streak_id, app_streaks__streak_logs.logged_date"
+    ))).toBe(true);
+  });
+
+  it("does not call an outage, a refusal or another constraint a duplicate", () => {
+    for (const message of [
+      "Couldn’t reach the hub. Try again.",
+      "Service unavailable",
+      "Query failed",
+      "Failed to fetch",
+      "Referenced streaks does not allow non-owner inserts",
+      "Referenced streaks (column \"streak_id\") is not visible to this member",
+      "DB row limit exceeded",
+      "UNIQUE constraint failed: app_streaks__streak_logs.id: SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_PRIMARYKEY)",
+      "NOT NULL constraint failed: app_streaks__streak_logs.logged_date: SQLITE_CONSTRAINT",
+      "",
+    ]) {
+      expect(isDuplicateLogError(new Error(message))).toBe(false);
+    }
+    expect(isDuplicateLogError(new TypeError("Failed to fetch"))).toBe(false);
+    expect(isDuplicateLogError(null)).toBe(false);
+    expect(isDuplicateLogError(undefined)).toBe(false);
+    expect(isDuplicateLogError({})).toBe(false);
   });
 });
