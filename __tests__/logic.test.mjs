@@ -185,6 +185,15 @@ describe("isDuplicateLogError", () => {
     ))).toBe(true);
   });
 
+  // A hub that names the refusal sends `code`; db() copies it onto the Error.
+  it("recognises the hub's UNIQUE_CONSTRAINT code whatever the message says", () => {
+    expect(isDuplicateLogError(Object.assign(new Error("Row already exists"), { code: "UNIQUE_CONSTRAINT", status: 400 }))).toBe(true);
+    expect(isDuplicateLogError({ code: "UNIQUE_CONSTRAINT" })).toBe(true);
+    for (const code of [undefined, null, "", "STALE_STATE", "unique_constraint", 400]) {
+      expect(isDuplicateLogError(Object.assign(new Error("Query failed"), { code }))).toBe(false);
+    }
+  });
+
   it("does not call an outage, a refusal or another constraint a duplicate", () => {
     for (const message of [
       "Couldn’t reach the hub. Try again.",

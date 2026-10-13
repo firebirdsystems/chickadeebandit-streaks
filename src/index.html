@@ -384,7 +384,10 @@ async function db(sql, params = []) {
     body: JSON.stringify({ sql, params }),
   });
   const json = await res.json().catch(() => null);
-  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
+  if (!res.ok || !json || typeof json !== "object" || json.error) {
+    // `code` ("UNIQUE_CONSTRAINT" for a row that already exists) and the status travel with the error.
+    throw Object.assign(new Error(json?.error || "Couldn’t reach the hub. Try again."), { code: json?.code, status: res.status });
+  }
   return json;
 }
 
@@ -584,9 +587,10 @@ window.toggleLog = async function(streakId, alreadyDone, date = null) {
         setStatus("Only the person who logged that day can undo it.");
       }
     } catch (e) {
+      console.error(e);
       logMap[streakId] = prev;
       render();
-      setStatus("Failed to remove log. Please try again.");
+      setStatus("Couldn’t remove the log — try again.");
     }
   } else {
     const id = crypto.randomUUID();

@@ -108,12 +108,15 @@ export function milestoneReached(days) {
 /**
  * True only when a failed log INSERT was refused because that streak already
  * has a log for that day (the UNIQUE index on streak_id + logged_date). The hub
- * gives a refused statement no code of its own — it answers HTTP 400 with
- * SQLite's message — so the message is the only signal, and it must name both
- * the UNIQUE refusal and `logged_date`. Anything else (an outage, a row-policy
- * refusal, a full database) is NOT a duplicate.
+ * answers HTTP 400 with `code: "UNIQUE_CONSTRAINT"` beside SQLite's message; the
+ * page's db() helper carries it as `error.code`. Each log is inserted under a
+ * fresh random id, so the code can only mean the day is taken. A hub that sends
+ * no code yet is read by its message, which must name both the UNIQUE refusal
+ * and `logged_date`. Anything else (an outage, a row-policy refusal, a full
+ * database) is NOT a duplicate.
  */
 export function isDuplicateLogError(error) {
+  if (error?.code === "UNIQUE_CONSTRAINT") return true;
   const message = typeof error?.message === "string" ? error.message : "";
   return /UNIQUE constraint failed:[^:]*\blogged_date\b/i.test(message);
 }
