@@ -97,16 +97,17 @@
       "fk_column": "streak_id",
       "parent_table": "streaks",
       "writer_column": "logged_by",
-      "insert_non_owner_parent_truthy_column": "is_group",
-      "retain_days": { "default": 365, "timestamp_column": "created_at", "override_key": "streak_history" }
+      "insert_non_owner_parent_truthy_column": "is_group"
     }
+  },
+  "retention": {
+    "streak_logs": { "default": 365, "timestamp_column": "created_at", "override_key": "streak_history" }
   },
   "publishes": ["streak.milestone"],
   "publish_acls": {
     "streak.milestone": { "require_role": "adult" }
   },
   "widget": { "label": "Streaks", "size": "small" },
-  "resource_limits": { "max_db_bytes": 52428800 },
   "icon": "🔥",
   "ai_access": {
     "allowed": true,
