@@ -135,5 +135,21 @@ init().catch(() => {
   document.getElementById("content").innerHTML = `<div class="load-error" data-testid="load-error" role="alert">Couldn’t load the streaks.</div>`;
 });
 </script>
+<script type="module">
+  // A link to this app opens it through the hub. Followed in place it loaded
+  // the whole app inside this tile: the Home grid's sandbox cannot move the
+  // hub page. The query goes along as the app's launch params.
+  import { hubOpen } from "/hub-sdk.js";
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest?.('a[href^="/run/"]');
+    // Already sent by the hub's own link handler (it runs first, on capture).
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    const url = new URL(a.href);
+    const app = /^\/run\/([a-z0-9_-]+)$/i.exec(url.pathname);
+    if (!app) return;
+    e.preventDefault();
+    hubOpen(app[1], Object.fromEntries(url.searchParams));
+  });
+</script>
 </body>
 </html>
